@@ -19,8 +19,8 @@ export default function StudyHubPage() {
       />
       <HubHero
         image={{
-          src: "/images/nova-study-banner.jpg",
-          alt: "Students in a bright lecture room at Nova SBE, listening to a professor.",
+          src: "/images/nova-study-lecture-hall.png",
+          alt: "Students attending a lecture in a modern NOVA SBE lecture hall.",
         }}
         headline="Stay on top of your semester."
         text="Lectures, exams, to-dos and tuition dates, so nothing slips through."

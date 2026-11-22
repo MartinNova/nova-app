@@ -11,8 +11,8 @@ export default function PadelPage() {
       <PageHeader title="Padel" subtitle="Find players for your next match." backHref="/sport" />
       <div className="relative mb-6 aspect-[2/1] overflow-hidden rounded-2xl sm:aspect-[3/1]">
         <Image
-          src="/images/nova-padel-banner.png"
-          alt="Two padel players on court, with one reaching to return the ball."
+          src="/images/nova-padel-lisbon-bridge.png"
+          alt="Two people playing padel beneath the Ponte 25 de Abril bridge in Lisbon."
           fill
           sizes="(max-width: 768px) 100vw, 672px"
           preload
