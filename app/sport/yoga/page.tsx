@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
 import { Card } from "@/components/ui/Card";
-import { PageHeader } from "@/components/ui/PageHeader";
+import { HubHero } from "@/components/ui/HubHero";
 
 export const metadata: Metadata = { title: "Yoga" };
 
@@ -13,20 +13,23 @@ const SCHEDULE_URL =
 export default function YogaPage() {
   return (
     <>
-      <PageHeader title="Yoga" subtitle="Classes on campus by Nova MindSpace." backHref="/sport" />
+      <HubHero
+        title="Yoga"
+        tagline="Classes on campus by Nova MindSpace."
+        image={{ src: "/images/nova-yoga-banner.png", alt: "A woman holding a yoga pose." }}
+        backHref="/sport"
+      />
       <section aria-labelledby="yoga-title" className="space-y-5">
-        <div className="relative aspect-[4/3] overflow-hidden rounded-2xl sm:aspect-[16/9]">
-          <Image
-            src="/images/nova-mindspace.jpg"
-            alt="Nova MindSpace logo: the words Mind and Space inside a hand-drawn blue oval."
-            fill
-            sizes="(max-width: 768px) 100vw, 768px"
-            preload
-            className="object-cover object-center"
-          />
-        </div>
         <Card className="space-y-5 p-6 sm:p-8">
           <div className="space-y-3">
+            {/* The club's logo, small: the photo above sets the mood. */}
+            <Image
+              src="/images/nova-mindspace.jpg"
+              alt="Nova MindSpace logo: the words Mind and Space inside a hand-drawn blue oval."
+              width={64}
+              height={64}
+              className="size-16 rounded-2xl object-cover"
+            />
             <h2
               id="yoga-title"
               className="text-foreground text-3xl font-bold tracking-tight sm:text-4xl"

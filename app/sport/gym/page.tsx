@@ -1,43 +1,47 @@
 import type { Metadata } from "next";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import Image from "next/image";
 import { ArrowUpRight, CalendarDays, Dumbbell, MapPin } from "lucide-react";
 import { GymView } from "@/components/sport/gym/GymView";
 import { Card } from "@/components/ui/Card";
+import { HubHero } from "@/components/ui/HubHero";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { VIVA_GYM } from "@/data/viva-gym";
 
 export const metadata: Metadata = { title: "Gym" };
 
-/** Photo of the gym. If the file is removed, a dumbbell icon is shown instead. */
+/** Photo of the gym (page header). If the file is removed, a dumbbell icon is shown instead. */
 const PHOTO = "/images/viva-gym.jpg";
 const HAS_PHOTO = existsSync(join(process.cwd(), "public", PHOTO));
 
 export default function GymPage() {
   return (
     <>
-      <PageHeader
-        title="Gym"
-        subtitle="Viva Gym on campus: opening hours and how busy it is."
-        backHref="/sport"
-      />
-      <div className="bg-brand text-brand-foreground relative mb-4 aspect-[2/1] overflow-hidden rounded-2xl sm:aspect-[3/1]">
-        {HAS_PHOTO ? (
-          <Image
-            src={PHOTO}
-            alt="Glass entrance of the Viva Gym with an orange Vivagym sign and a woman with a gym bag walking past."
-            fill
-            sizes="(max-width: 768px) 100vw, 768px"
-            preload
-            className="object-cover object-center"
+      {HAS_PHOTO ? (
+        <HubHero
+          title="Gym"
+          tagline="Viva Gym, right on campus."
+          image={{
+            src: PHOTO,
+            alt: "Glass entrance of the Viva Gym with an orange Vivagym sign and a woman with a gym bag walking past.",
+          }}
+          backHref="/sport"
+        />
+      ) : (
+        <>
+          <PageHeader
+            title="Gym"
+            subtitle="Viva Gym on campus: opening hours and how busy it is."
+            backHref="/sport"
           />
-        ) : (
-          <div className="flex size-full items-center justify-center" aria-hidden>
+          <div
+            className="bg-brand text-brand-foreground mb-4 flex aspect-[3/1] items-center justify-center rounded-2xl"
+            aria-hidden
+          >
             <Dumbbell className="size-16 opacity-70" />
           </div>
-        )}
-      </div>
+        </>
+      )}
 
       <Card className="mb-4">
         <h2 className="text-lg font-semibold">{VIVA_GYM.name}</h2>

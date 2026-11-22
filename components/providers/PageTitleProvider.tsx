@@ -12,6 +12,8 @@ export interface PageTitle {
   backHref?: string;
   /** False once the page's large title has scrolled under the top bar. */
   largeTitleVisible: boolean;
+  /** The page starts with a photo under the top bar (HubHero): bar see-through until scrolled. */
+  immersive?: boolean;
 }
 
 type Setter = (title: PageTitle | null) => void;
