@@ -14,16 +14,6 @@ export default function YogaPage() {
   return (
     <>
       <PageHeader title="Yoga" subtitle="Classes on campus by Nova MindSpace." backHref="/sport" />
-      <div className="relative mb-6 aspect-[2/1] overflow-hidden rounded-2xl sm:aspect-[3/1]">
-        <Image
-          src="/images/nova-yoga-banner.png"
-          alt="A woman practicing a standing yoga pose in a sunlit studio."
-          fill
-          sizes="(max-width: 768px) 100vw, 672px"
-          preload
-          className="object-cover object-left"
-        />
-      </div>
       <section aria-labelledby="yoga-title" className="space-y-5">
         <div className="relative aspect-[4/3] overflow-hidden rounded-2xl sm:aspect-[16/9]">
           <Image
