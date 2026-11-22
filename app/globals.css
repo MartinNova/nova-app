@@ -254,3 +254,43 @@ body {
     opacity: 0;
   }
 }
+
+/* HubHero: the photo fades into the page at the bottom (and at the sides on wide screens). */
+.hub-hero-photo {
+  mask-image: linear-gradient(
+    to bottom,
+    #000 40%,
+    rgb(0 0 0 / 0.4) 66%,
+    rgb(0 0 0 / 0.08) 86%,
+    transparent
+  );
+}
+@media (min-width: 640px) {
+  .hub-hero-photo {
+    mask-image:
+      linear-gradient(
+        to bottom,
+        #000 40%,
+        rgb(0 0 0 / 0.4) 66%,
+        rgb(0 0 0 / 0.08) 86%,
+        transparent
+      ),
+      linear-gradient(to right, transparent, #000 10%, #000 90%, transparent);
+    mask-composite: intersect;
+  }
+}
+/* …and drifts a little slower than the page while scrolling (parallax), where supported. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: scroll()) {
+    .hub-hero-parallax {
+      animation: hub-hero-parallax linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 250px;
+    }
+  }
+}
+@keyframes hub-hero-parallax {
+  to {
+    transform: translateY(30%) scale(1.06);
+  }
+}

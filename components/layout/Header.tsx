@@ -18,12 +18,19 @@ export function Header() {
   const { pageTitle } = usePageTitle();
   const isHome = pathname === "/";
   const collapsed = pageTitle !== null && !pageTitle.largeTitleVisible;
+  // Over a page photo the bar is see-through and its buttons float as glass capsules (iOS 26).
+  const overPhoto = Boolean(pageTitle?.immersive) && !collapsed;
+  const capsule = overPhoto ? "glass rounded-full shadow-sm" : "";
   const backHref = pageTitle?.backHref;
 
   return (
     <header
       className={`sticky top-0 z-20 pt-[env(safe-area-inset-top)] transition-colors ${
-        collapsed ? "glass border-x-0 border-t-0" : "bg-background border-b border-transparent"
+        collapsed
+          ? "glass border-x-0 border-t-0"
+          : overPhoto
+            ? "border-b border-transparent bg-transparent"
+            : "bg-background border-b border-transparent"
       }`}
     >
       <div className="mx-auto grid h-12 max-w-2xl grid-cols-[1fr_auto_1fr] items-center gap-2 px-2">
@@ -31,7 +38,7 @@ export function Header() {
           {backHref ? (
             <Link
               href={backHref}
-              className="text-brand focus-visible:outline-brand flex h-11 min-w-0 items-center rounded-lg pr-2 text-[17px] focus-visible:outline-2 active:opacity-60"
+              className={`text-brand focus-visible:outline-brand flex min-w-0 items-center text-[17px] focus-visible:outline-2 active:opacity-60 ${overPhoto ? `${capsule} h-9 pr-3 pl-1` : "h-11 rounded-lg pr-2"}`}
             >
               <ChevronLeft className="size-7 shrink-0" strokeWidth={2.2} aria-hidden />
               <span className="truncate">{labelForHref(backHref)}</span>
@@ -64,7 +71,11 @@ export function Header() {
         </p>
 
         <div className="flex justify-end">
-          <AccountSwitcher compact={!isHome} />
+          <div
+            className={`flex items-center transition-colors ${capsule} ${overPhoto ? "p-0.5 pl-1.5" : ""}`}
+          >
+            <AccountSwitcher compact={!isHome} />
+          </div>
         </div>
       </div>
     </header>

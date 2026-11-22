@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { CampusTile } from "@/components/campus/CampusLinkCard";
 import { HubHero } from "@/components/ui/HubHero";
-import { PageHeader } from "@/components/ui/PageHeader";
 import { CAMPUS_LINK_SECTIONS } from "@/data/campus-links";
 
 export const metadata: Metadata = { title: "Campus" };
@@ -9,17 +8,14 @@ export const metadata: Metadata = { title: "Campus" };
 export default function CampusPage() {
   return (
     <>
-      <PageHeader
-        title="Campus"
-        subtitle="Getting here, rooms & flats, library, campus map and restaurants."
-      />
       <HubHero
+        title="Campus"
+        tagline="Life by the sea in Carcavelos."
         image={{
           src: "/images/nova-campus-evening-courtyard.png",
           alt: "The NOVA SBE courtyard with modern glass architecture and warm evening lighting.",
         }}
-        headline="Life by the sea in Carcavelos."
-        text="How to get here, where to live, where to eat and where to study."
+        cropTop
       />
       <div className="space-y-6">
         {CAMPUS_LINK_SECTIONS.map((section) => (

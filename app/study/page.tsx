@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Badge } from "@/components/ui/Badge";
 import { HubHero } from "@/components/ui/HubHero";
-import { PageHeader } from "@/components/ui/PageHeader";
 import { TILE_COLORS, Tile } from "@/components/ui/Tile";
 import { STUDY_MODULES } from "@/lib/config/navigation";
 
@@ -13,17 +12,14 @@ const COLORS: (keyof typeof TILE_COLORS)[] = ["blue", "amber", "pink"];
 export default function StudyHubPage() {
   return (
     <>
-      <PageHeader
-        title="Study Hub"
-        subtitle="Your timetable, uni to-dos and payment deadlines in one place."
-      />
       <HubHero
+        title="Study Hub"
+        tagline="Stay on top of your semester."
         image={{
           src: "/images/nova-study-lecture-hall.png",
           alt: "Students attending a lecture in a modern NOVA SBE lecture hall.",
         }}
-        headline="Stay on top of your semester."
-        text="Lectures, exams, to-dos and tuition dates, so nothing slips through."
+        cropTop
       />
       <div className="grid grid-cols-2 gap-3">
         {STUDY_MODULES.map(({ href, label, description, icon: Icon, status }, i) => (
