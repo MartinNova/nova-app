@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Pizza } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { PageHeader } from "@/components/ui/PageHeader";
+import { HubHero } from "@/components/ui/HubHero";
 import { MenuCategory } from "@/components/canteen/MenuCategory";
 import { THE_CUT_MENU, THE_CUT_REVIEW_NOTES } from "@/data/the-cut";
 
@@ -11,15 +11,20 @@ export default function TheCutPage() {
   return (
     <div className="space-y-8">
       <div>
-        <PageHeader title="The Cut" subtitle="Pizza, snacks & drinks" backHref="/canteen" />
+        <HubHero
+          title="The Cut"
+          tagline="Pizza, snacks & drinks."
+          image={{
+            src: "/images/food/the-cut.png",
+            alt: "AI-generated illustration of mozzarella pizza with garlic bread and a drink.",
+          }}
+          backHref="/canteen"
+        />
         <Card className="border-brand/20 bg-brand/5 space-y-4 p-6 sm:p-8">
           <div className="flex items-center gap-3">
             <Pizza className="text-brand size-9" aria-hidden />
             <Badge tone="brand">NOVA SBE · In-store menu</Badge>
           </div>
-          <p className="text-2xl font-semibold tracking-tight sm:text-3xl">
-            A slice of campus life.
-          </p>
           <p className="text-muted text-sm leading-relaxed">
             Menu photographed on 17 November 2026. Prices and availability may change.
           </p>
