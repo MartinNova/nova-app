@@ -1,9 +1,20 @@
 "use client";
 
-import { BedDouble, CalendarDays, MapPin, Pencil, Receipt, Trash2 } from "lucide-react";
+import {
+  BedDouble,
+  CalendarDays,
+  ChevronRight,
+  MapPin,
+  MessageCircle,
+  Pencil,
+  Receipt,
+  Trash2,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { FriendButton } from "@/components/friends/FriendButton";
+import { useFriendships } from "@/components/friends/useFriendships";
 import { useCurrentUser } from "@/components/providers/CurrentUserProvider";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
@@ -33,6 +44,7 @@ export function RoomDetailView() {
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editing, setEditing] = useState(false);
+  const friendships = useFriendships(userId);
   const toast = useToast();
   const [error, setError] = useState<string | null>(null);
 
@@ -173,28 +185,54 @@ export function RoomDetailView() {
         </Card>
       ) : (
         poster && (
-          <Card className="flex items-center gap-3">
-            <Avatar
-              firstName={poster.firstName}
-              lastName={poster.lastName}
-              username={poster.username}
-              url={poster.avatarUrl}
-              size={48}
-            />
-            <div className="min-w-0 flex-1">
-              <p className="font-semibold">
-                {[poster.firstName, poster.lastName].filter(Boolean).join(" ") ||
-                  `@${poster.username}`}
-              </p>
-              <p className="text-muted text-sm">Posted this listing</p>
-            </div>
+          <Card className="grid gap-3">
+            {/* Picture and name open their profile, like everywhere else in the app. */}
+            <Link
+              href={poster.username ? `/friends/profile?u=${poster.username}` : "#"}
+              className="focus-visible:outline-brand -m-1 flex items-center gap-3 rounded-2xl p-1 focus-visible:outline-2 active:opacity-70"
+            >
+              <Avatar
+                firstName={poster.firstName}
+                lastName={poster.lastName}
+                username={poster.username}
+                url={poster.avatarUrl}
+                size={48}
+              />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-semibold">
+                  {[poster.firstName, poster.lastName].filter(Boolean).join(" ") ||
+                    `@${poster.username}`}
+                </span>
+                <span className="text-muted block text-sm">
+                  Posted this listing · <span className="text-brand font-medium">View profile</span>
+                </span>
+              </span>
+              <ChevronRight className="text-muted size-5 shrink-0" aria-hidden />
+            </Link>
             {poster.username && (
-              <Link
-                href={`/friends/chat?u=${poster.username}&listing=${encodeURIComponent(listing.id)}`}
-                className="bg-brand text-brand-foreground inline-flex h-10 shrink-0 items-center rounded-xl px-4 text-sm font-medium hover:opacity-90"
-              >
-                Message
-              </Link>
+              <div className="grid grid-cols-2 gap-2">
+                {friendships ? (
+                  <FriendButton
+                    me={user.id}
+                    person={{
+                      userId: poster.id,
+                      firstName: poster.firstName,
+                      username: poster.username,
+                    }}
+                    friendships={friendships}
+                    size="full"
+                  />
+                ) : (
+                  <span className="bg-border h-11 animate-pulse rounded-xl" aria-hidden />
+                )}
+                <Link
+                  href={`/friends/chat?u=${poster.username}&listing=${encodeURIComponent(listing.id)}`}
+                  className="border-border bg-surface text-foreground hover:bg-border/40 inline-flex h-11 items-center justify-center gap-2 rounded-xl border px-4 font-semibold"
+                >
+                  <MessageCircle className="size-5" aria-hidden />
+                  Message
+                </Link>
+              </div>
             )}
           </Card>
         )
