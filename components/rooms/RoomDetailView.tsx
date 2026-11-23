@@ -1,6 +1,6 @@
 "use client";
 
-import { BedDouble, CalendarDays, MapPin, Receipt, Trash2 } from "lucide-react";
+import { BedDouble, CalendarDays, MapPin, Pencil, Receipt, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -9,10 +9,17 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { useToast } from "@/components/ui/Toast";
 import { toISODate } from "@/lib/padel/dates";
 import { formatAvailability, formatRent } from "@/lib/rooms/rooms";
 import { roomService } from "@/lib/services/rooms.service";
-import { ROOM_TYPES, type RoomListing } from "@/types/rooms";
+import {
+  ROOM_TYPES,
+  type ListingPhotos,
+  type NewRoomListing,
+  type RoomListing,
+} from "@/types/rooms";
+import { NewListingForm } from "./NewListingForm";
 import { PhotoGallery } from "./PhotoGallery";
 
 type Loaded = { id: string; listing: RoomListing | null; today: string };
@@ -25,6 +32,8 @@ export function RoomDetailView() {
   const userId = user?.id;
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const toast = useToast();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -64,6 +73,26 @@ export function RoomDetailView() {
 
   const poster = users.find((u) => u.id === listing.createdBy);
   const isMine = listing.createdBy === user.id;
+
+  async function handleSave(input: NewRoomListing, photos: ListingPhotos) {
+    const updated = await roomService.updateListing(listing!.id, input, photos, user!.id);
+    setLoaded({ id, listing: updated, today: current!.today });
+    setEditing(false);
+    toast("Changes saved");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  if (editing) {
+    return (
+      <NewListingForm
+        kind={listing.kind}
+        today={current.today}
+        initial={listing}
+        onSubmit={handleSave}
+        onClose={() => setEditing(false)}
+      />
+    );
+  }
 
   async function handleDelete() {
     setError(null);
@@ -119,6 +148,9 @@ export function RoomDetailView() {
       {isMine ? (
         <Card className="grid gap-3">
           <p className="font-semibold">This is your listing</p>
+          <Button onClick={() => setEditing(true)}>
+            <Pencil className="size-4" aria-hidden /> Edit listing
+          </Button>
           {confirmDelete ? (
             <div className="flex flex-wrap gap-2">
               <Button onClick={handleDelete} className="bg-red-600 text-white">

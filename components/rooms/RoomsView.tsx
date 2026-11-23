@@ -10,7 +10,13 @@ import { useToast } from "@/components/ui/Toast";
 import { toISODate } from "@/lib/padel/dates";
 import { filterListings } from "@/lib/rooms/rooms";
 import { roomService } from "@/lib/services/rooms.service";
-import { ROOM_AREAS, type ListingKind, type NewRoomListing, type RoomListing } from "@/types/rooms";
+import {
+  type ListingKind,
+  type ListingPhotos,
+  type NewRoomListing,
+  type RoomListing,
+} from "@/types/rooms";
+import { AreaFilter } from "./AreaFilter";
 import { NewListingForm } from "./NewListingForm";
 import { RoomCard } from "./RoomCard";
 
@@ -31,7 +37,7 @@ export function RoomsView() {
   const today = useSyncExternalStore(noSubscription, readToday, () => null);
   const [listings, setListings] = useState<RoomListing[] | null>(null);
   const [kind, setKind] = useState<ListingKind>("offer");
-  const [area, setArea] = useState("");
+  const [areas, setAreas] = useState<string[]>([]);
   const [maxRent, setMaxRent] = useState<number | undefined>(undefined);
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,9 +58,9 @@ export function RoomsView() {
   // Live: new listings from other devices appear without reloading.
   useEffect(() => roomService.onChange(() => void reload()), [reload]);
 
-  async function handleCreate(input: NewRoomListing, photos: Blob[]) {
+  async function handleCreate(input: NewRoomListing, photos: ListingPhotos) {
     if (!user) throw new Error("Please sign in first.");
-    await roomService.createListing(input, photos, user.id);
+    await roomService.createListing(input, photos.added, user.id);
     toast(input.kind === "offer" ? "Listing posted" : "Search posted");
     setShowForm(false);
     setKind(input.kind);
@@ -83,7 +89,7 @@ export function RoomsView() {
     return <div className="bg-border h-64 animate-pulse rounded-2xl" aria-busy="true" />;
   }
 
-  const shown = filterListings(listings, { kind, area: area || undefined, maxRent }, today);
+  const shown = filterListings(listings, { kind, areas, maxRent }, today);
 
   return (
     <div className="grid grid-cols-1 gap-4">
@@ -119,19 +125,7 @@ export function RoomsView() {
       )}
 
       <div className="grid grid-cols-2 gap-2">
-        <select
-          aria-label="Area"
-          value={area}
-          onChange={(e) => setArea(e.target.value)}
-          className={selectClass}
-        >
-          <option value="">All areas</option>
-          {ROOM_AREAS.map((a) => (
-            <option key={a} value={a}>
-              {a}
-            </option>
-          ))}
-        </select>
+        <AreaFilter value={areas} onChange={setAreas} />
         <select
           aria-label={kind === "offer" ? "Max. rent" : "Budget"}
           value={maxRent ?? ""}
