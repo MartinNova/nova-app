@@ -5,8 +5,9 @@ export const NETPA_FINANCE_URL = "https://netpa.novasbe.pt/netpa/page?stage=difh
 
 /**
  * Tuition instalments of the 2026/27 Masters, taken from netPA (Financial Situation).
- * Due dates are the same for everyone in the programme; amounts differ per student,
- * so they are not stored here. Check against "Payment Plans" before each year.
+ * Due dates are the same for everyone in the programme. Amounts are only given for the
+ * instalments still to come and may differ per student: check against "Payment Plans"
+ * before each year.
  */
 export const PAYMENT_DEADLINES: Deadline[] = [
   {
@@ -43,6 +44,7 @@ export const PAYMENT_DEADLINES: Deadline[] = [
     date: "2026-12-05",
     kind: "tuition",
     note: "2026/27 · 3ª Prestação (Dezembro)",
+    amountEur: 3650,
   },
   {
     id: "2026-27-installment-4",
@@ -50,5 +52,6 @@ export const PAYMENT_DEADLINES: Deadline[] = [
     date: "2027-05-31",
     kind: "tuition",
     note: "4ª Prestação (Maio)",
+    amountEur: 3000,
   },
 ];
