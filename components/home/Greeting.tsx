@@ -28,7 +28,7 @@ export function Greeting() {
   const message = useSyncExternalStore(subscribeToLocalDay, dailyMessage, () => "\u00a0");
 
   return (
-    <LargeTitle title={user ? `Olá, ${user.firstName}` : "Olá"} eyebrow={date}>
+    <LargeTitle title={user ? `Olá, ${user.firstName}` : "Olá"} eyebrow={date} immersive>
       <p className="text-muted mt-2 text-sm leading-relaxed">{message}</p>
     </LargeTitle>
   );

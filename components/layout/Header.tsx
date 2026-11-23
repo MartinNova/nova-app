@@ -40,9 +40,12 @@ export function Header() {
   const backHref = pageTitle?.backHref;
   // White over the photo; black (white in dark mode) on plain pages and once the bar turns to glass.
   const whiteLogo = PHOTO_PAGES.includes(pathname) && !glass;
+  // The home artwork is light (cream), so over it the logo stays black, also in dark mode.
+  const overLightArt = pathname === "/" && overPhoto;
   // Main tab pages always show their own name in the middle; other pages show it once scrolled.
   const mainLabel = showLogo ? labelForHref(pathname) : null;
-  const titleVisible = showLogo || collapsed;
+  // Over the home artwork the bar shows only logo and account, so the drawing stays clear.
+  const titleVisible = (showLogo && !overLightArt) || collapsed;
   const centerTitle = mainLabel ?? pageTitle?.title;
 
   return (
@@ -79,7 +82,7 @@ export function Header() {
                   alt="Nova School of Business & Economics"
                   width={572}
                   height={80}
-                  className={`h-[22px] w-auto max-w-none shrink-0 ${whiteLogo ? "invert" : "dark:invert"}`}
+                  className={`h-[22px] w-auto max-w-none shrink-0 ${whiteLogo ? "invert" : overLightArt ? "" : "dark:invert"}`}
                 />
               </Link>
             )
