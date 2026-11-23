@@ -231,14 +231,24 @@ export function DeadlinesView() {
             <FileSpreadsheet className="text-brand size-5" aria-hidden /> Import your payment plan
           </p>
           <p className="text-muted mt-1 text-sm">
-            Payment plans differ per student, so the app uses yours. In netPA, open{" "}
-            <strong>Financial Situation → Current account</strong> and export it to Excel. Then
-            import the file here.
+            Payment plans differ per student, so the app uses yours. Due dates become your countdown
+            and reminders, and your payments show what is already paid.
           </p>
-          <ul className="text-muted mt-3 list-disc space-y-1 pl-5 text-sm">
-            <li>Due dates and amounts become your countdown and reminders</li>
-            <li>Payments you made show which ones are paid, and how much</li>
-          </ul>
+          <p className="mt-3 text-sm font-medium">Get the file from netPA</p>
+          <ol className="text-muted mt-1 list-decimal space-y-1 pl-5 text-sm">
+            <li>
+              Open <strong>Bursary</strong> in the top bar
+            </li>
+            <li>
+              Choose <strong>Payment Plans</strong>
+            </li>
+            <li>
+              Click <strong>Financial Transactions</strong> on the left
+            </li>
+            <li>
+              Click <strong>Export</strong> (.XLS) and import that file here
+            </li>
+          </ol>
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
             <Button onClick={() => fileInput.current?.click()} disabled={busy}>
               <Upload className="size-4" aria-hidden /> {busy ? "Importing…" : "Import Excel file"}
