@@ -52,6 +52,16 @@ export function leaveMatch(match: PadelMatch, userId: string): PadelMatch {
   };
 }
 
+/**
+ * Matches you play in or asked to join, sorted by date and time: shown as "Your matches" below
+ * the calendar, so a court booked for next week is visible without picking its day.
+ */
+export function myMatches(matches: PadelMatch[], userId: string): PadelMatch[] {
+  return filterMatches(matches).filter(
+    (m) => m.playerIds.includes(userId) || myRequest(m, userId)?.status === "pending",
+  );
+}
+
 /** Your own request for this match, if any. */
 export function myRequest(match: PadelMatch, userId: string): JoinRequest | undefined {
   return (match.requests ?? []).find((r) => r.userId === userId);
