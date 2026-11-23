@@ -11,6 +11,7 @@ import {
   Phone,
   Siren,
 } from "lucide-react";
+import Image from "next/image";
 import { TILE_COLORS } from "@/components/ui/Tile";
 import {
   CLUBS,
@@ -173,24 +174,53 @@ export function NewAtNova() {
               // Collapsed by default, so 39 clubs don't fill the whole page.
               <details key={category} className="group">
                 <summary className="focus-visible:outline-brand flex cursor-pointer list-none items-center gap-3 p-4 focus-visible:outline-2 [&::-webkit-details-marker]:hidden">
-                  <span className="flex-1 font-semibold">{category}</span>
-                  <span className="text-muted text-sm">{clubs.length}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-semibold">{category}</span>
+                    <span className="text-muted block text-sm">{clubs.length} clubs</span>
+                  </span>
+                  {/* A peek at the logos, like stacked profile pictures. */}
+                  <span className="flex -space-x-2.5" aria-hidden>
+                    {clubs.slice(0, 4).map((club) => (
+                      <Image
+                        key={club.name}
+                        src={club.logo}
+                        alt=""
+                        width={32}
+                        height={32}
+                        className="ring-surface size-8 rounded-full bg-white object-cover ring-2"
+                      />
+                    ))}
+                  </span>
                   <ChevronRight
-                    className="text-muted size-4 transition-transform group-open:rotate-90"
+                    className="text-muted size-4 shrink-0 transition-transform group-open:rotate-90"
                     aria-hidden
                   />
                 </summary>
-                <ul className="flex flex-wrap gap-2 px-4 pb-4">
+                <ul className="divide-border divide-y px-4 pb-2">
                   {clubs.map((club) => (
                     <li key={club.name}>
                       <a
                         href={club.instagram}
                         target="_blank"
                         rel="noreferrer"
-                        className={`${pill} border-border border`}
+                        className="focus-visible:outline-brand flex items-center gap-3 rounded-xl py-3 focus-visible:outline-2 active:opacity-70"
                       >
-                        <AtSign className="text-muted size-3.5" aria-hidden />
-                        {club.name}
+                        <Image
+                          src={club.logo}
+                          alt=""
+                          width={48}
+                          height={48}
+                          className="border-border size-12 shrink-0 rounded-full border bg-white object-cover"
+                        />
+                        <span className="min-w-0 flex-1">
+                          <span className="block leading-tight font-semibold">{club.name}</span>
+                          <span className="text-muted mt-0.5 block text-sm leading-snug">
+                            {club.about}
+                          </span>
+                        </span>
+                        <span className="bg-brand/10 text-brand flex size-9 shrink-0 items-center justify-center rounded-full">
+                          <AtSign className="size-4" aria-hidden />
+                        </span>
                         <span className="sr-only">on Instagram (opens in a new tab)</span>
                       </a>
                     </li>

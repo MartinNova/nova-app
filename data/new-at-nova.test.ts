@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { CLUBS, CONTACTS, ESSENTIAL_LINKS, STUDENT_UNION, TIPS } from "./new-at-nova";
 
@@ -23,6 +24,14 @@ describe("New at Nova data", () => {
   it("every club links to its Instagram profile", () => {
     for (const club of [...CLUBS, STUDENT_UNION])
       expect(club.instagram, club.name).toMatch(/^https:\/\/www\.instagram\.com\/[\w.]+\/$/);
+  });
+
+  it("every club has a logo file and a short description", () => {
+    for (const club of CLUBS) {
+      expect(existsSync(`public${club.logo}`), club.name).toBe(true);
+      expect(club.about.length, club.name).toBeGreaterThan(10);
+      expect(club.about.length, club.name).toBeLessThanOrEqual(60);
+    }
   });
 
   it("lists every Student Union club once", () => {
