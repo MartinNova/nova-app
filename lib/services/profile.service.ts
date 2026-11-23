@@ -1,4 +1,4 @@
-import { validateProfileUpdate } from "@/lib/profile/profile-rules";
+import { normalizePhone, validateProfileUpdate } from "@/lib/profile/profile-rules";
 import { readJSON, writeJSON } from "@/lib/storage";
 import { getSupabase } from "@/lib/supabase/client";
 import { AUTH_MODE } from "@/lib/supabase/config";
@@ -12,6 +12,11 @@ import type { Profile, ProfileService, ProfileUpdate } from "@/types/profile";
 import { userService } from "./user.service";
 
 const PROFILES_KEY = "profiles";
+
+/** Same clean-up for both modes before validating and saving (e.g. the phone number). */
+function tidy(update: ProfileUpdate): ProfileUpdate {
+  return { ...update, phone: normalizePhone(update.phone) };
+}
 const AVATAR_BUCKET = "avatars";
 
 /** Demo mode: base data from the mock user, edits stored per user in localStorage. */
@@ -30,6 +35,7 @@ const demoProfileService: ProfileService = {
       languages: [],
       instagram: "",
       linkedin: "",
+      phone: "",
       program: "",
       studyStart: "",
       studyEnd: "",
@@ -53,7 +59,8 @@ const demoProfileService: ProfileService = {
     const profiles = await Promise.all(users.map((u) => this.getProfile(u.id)));
     return profiles.filter((p): p is Profile => p !== null && p.visibility === "everyone");
   },
-  async updateProfile(userId, update) {
+  async updateProfile(userId, input) {
+    const update = tidy(input);
     const error = validateProfileUpdate(update);
     if (error) throw new Error(error);
     const all = readJSON<Record<string, ProfileUpdate>>(PROFILES_KEY, {});
@@ -108,7 +115,8 @@ const supabaseProfileService: ProfileService = {
     if (error) throw error;
     return (data as unknown as ProfileRow[]).map((row) => rowToProfile(row));
   },
-  async updateProfile(userId, update) {
+  async updateProfile(userId, input) {
+    const update = tidy(input);
     const error = validateProfileUpdate(update);
     if (error) throw new Error(error);
     const { data, error: dbError } = await getSupabase()
@@ -119,6 +127,8 @@ const supabaseProfileService: ProfileService = {
       .single();
     // 23505 = unique violation, i.e. the username is taken.
     if (dbError?.code === "23505") throw new Error("This username is already taken.");
+    // 23514 = check violation, e.g. a phone number the app's check let through.
+    if (dbError?.code === "23514") throw new Error("Please check your profile details.");
     if (dbError) throw dbError;
     // The student number is changed through a checked function (digits only, your own row).
     const row = data as unknown as ProfileRow;

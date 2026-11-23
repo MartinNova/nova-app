@@ -1,12 +1,18 @@
 "use client";
 
-import { GraduationCap, IdCard, Languages } from "lucide-react";
+import { GraduationCap, IdCard, Languages, Phone } from "lucide-react";
 import Image from "next/image";
 import { usePresence } from "@/components/providers/PresenceProvider";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
-import { countryName, flagEmoji, formatMonth, studyProgress } from "@/lib/profile/profile-rules";
+import {
+  countryName,
+  flagEmoji,
+  formatMonth,
+  phoneHref,
+  studyProgress,
+} from "@/lib/profile/profile-rules";
 import { formatLevel } from "@/types/padel";
 import { STUDY_STATUSES, type Profile } from "@/types/profile";
 
@@ -68,6 +74,18 @@ export function ProfileCard({ profile: p, today }: ProfileCardProps) {
           <p className="text-sm">
             <span className="text-muted">Student ID</span>{" "}
             <span className="font-medium tabular-nums">{p.studentId}</span>
+          </p>
+        </div>
+      )}
+
+      {p.phone && (
+        <div className="flex items-center gap-3">
+          <Phone className="text-brand size-5 shrink-0" aria-hidden />
+          <p className="text-sm">
+            <span className="text-muted">Mobile</span>{" "}
+            <a href={phoneHref(p.phone)} className="text-brand font-medium tabular-nums underline">
+              {p.phone}
+            </a>
           </p>
         </div>
       )}

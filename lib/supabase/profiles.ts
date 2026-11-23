@@ -15,6 +15,7 @@ export interface ProfileRow {
   languages: string[];
   instagram: string;
   linkedin: string;
+  phone: string;
   program: string;
   study_start: string;
   study_end: string;
@@ -30,7 +31,7 @@ export interface ProfileRow {
 /** Everything except e-mail: other students can't read it (see migrations). */
 export const PROFILE_COLUMNS =
   "id, student_id, username, first_name, last_name, avatar_url, bio, country, languages, " +
-  "instagram, linkedin, program, study_start, study_end, study_status, sports, padel_level, " +
+  "instagram, linkedin, phone, program, study_start, study_end, study_status, sports, padel_level, " +
   "availability_days, availability_times, visibility, show_in_suggestions";
 
 /** Enough for names and avatars in lists (padel players, running clubs, ...). */
@@ -51,6 +52,7 @@ export function rowToProfile(row: ProfileRow, email = ""): Profile {
     languages: row.languages ?? [],
     instagram: row.instagram,
     linkedin: row.linkedin,
+    phone: row.phone ?? "",
     program: row.program,
     studyStart: row.study_start,
     studyEnd: row.study_end,
@@ -97,6 +99,7 @@ export function updateToRow(update: ProfileUpdate) {
     languages: update.languages,
     instagram: update.instagram.trim(),
     linkedin: update.linkedin.trim(),
+    phone: update.phone,
     program: update.program,
     study_start: update.studyStart,
     study_end: update.studyEnd,

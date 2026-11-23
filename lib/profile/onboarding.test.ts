@@ -20,6 +20,7 @@ const profile: Profile = {
   languages: ["German"],
   instagram: "",
   linkedin: "",
+  phone: "",
   program: "",
   studyStart: "",
   studyEnd: "",

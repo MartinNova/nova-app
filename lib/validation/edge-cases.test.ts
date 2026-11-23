@@ -45,6 +45,7 @@ describe("accounts", () => {
     languages: [],
     instagram: "",
     linkedin: "",
+    phone: "",
     program: "",
     studyStart: "",
     studyEnd: "",

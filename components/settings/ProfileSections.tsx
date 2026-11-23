@@ -1,10 +1,17 @@
 "use client";
 
-import { Camera } from "lucide-react";
+import { Camera, Phone } from "lucide-react";
 import { useRef, useState } from "react";
 import { Avatar } from "@/components/ui/Avatar";
+import { GroupedList, InputRow } from "@/components/ui/GroupedList";
 import { squareAvatar } from "@/lib/profile/avatar";
-import { COUNTRY_CODES, countryName, flagEmoji } from "@/lib/profile/profile-rules";
+import {
+  COUNTRY_CODES,
+  countryName,
+  flagEmoji,
+  normalizePhone,
+  validatePhone,
+} from "@/lib/profile/profile-rules";
 import { profileService } from "@/lib/services/profile.service";
 import { PADEL_LEVELS } from "@/types/padel";
 import {
@@ -205,6 +212,48 @@ export function AboutSection({ form, set, userId }: SectionProps & { userId: str
         </label>
       </div>
     </Section>
+  );
+}
+
+/** Optional mobile number, as an iOS-style grouped row. */
+export function ContactSection({ form, set }: SectionProps) {
+  const [touched, setTouched] = useState(false);
+  const error = touched ? validatePhone(normalizePhone(form.phone)) : null;
+
+  return (
+    <div className="grid gap-2">
+      <GroupedList title="Contact">
+        <InputRow
+          icon={<Phone className="size-[18px]" aria-hidden />}
+          tone="sport"
+          label="Mobile"
+          type="tel"
+          autoComplete="tel"
+          inputMode="tel"
+          placeholder="+351 912 345 678"
+          maxLength={25}
+          value={form.phone}
+          onChange={(e) => set("phone", e.target.value)}
+          onBlur={() => {
+            setTouched(true);
+            set("phone", normalizePhone(form.phone));
+          }}
+          onClear={() => {
+            setTouched(false);
+            set("phone", "");
+          }}
+          aria-invalid={error ? true : undefined}
+          aria-describedby="phone-hint"
+        />
+      </GroupedList>
+      <p id="phone-hint" className="text-muted mx-4 text-[13px]" aria-live="polite">
+        {error ? (
+          <span className="text-red-700 dark:text-red-400">{error}</span>
+        ) : (
+          "Optional. Students who can see your profile can call or text you. Leave it empty to hide it."
+        )}
+      </p>
+    </div>
   );
 }
 
