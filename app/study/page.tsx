@@ -16,6 +16,7 @@ export default function StudyHubPage() {
   return (
     <>
       <HubHero
+        hideTitle
         title="Study Hub"
         tagline="Stay on top of your semester."
         image={{

@@ -9,6 +9,7 @@ export default function FriendsPage() {
   return (
     <>
       <HubHero
+        hideTitle
         title="Friends"
         tagline="Find other Nova students and get in touch."
         image={{

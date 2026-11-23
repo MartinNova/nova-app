@@ -10,6 +10,8 @@ interface LargeTitleProps {
   eyebrow?: string;
   /** Sits on a photo that reaches under the top bar (see HubHero). */
   immersive?: boolean;
+  /** Only for screen readers: the tab bar already says which page this is. */
+  hideTitle?: boolean;
   className?: string;
   children?: React.ReactNode;
 }
@@ -23,6 +25,7 @@ export function LargeTitle({
   backHref,
   eyebrow,
   immersive,
+  hideTitle = false,
   className = "mb-6",
   children,
 }: LargeTitleProps) {
@@ -52,7 +55,10 @@ export function LargeTitle({
       {eyebrow && (
         <p className="text-muted text-[13px] font-semibold tracking-wide uppercase">{eyebrow}</p>
       )}
-      <h1 ref={ref} className="text-[34px] leading-[41px] font-bold tracking-tight">
+      <h1
+        ref={ref}
+        className={hideTitle ? "sr-only" : "text-[34px] leading-[41px] font-bold tracking-tight"}
+      >
         {title}
       </h1>
       {children}
