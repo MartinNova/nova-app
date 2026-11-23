@@ -113,7 +113,8 @@ export function RoomsView() {
         />
       ) : (
         <Button className="w-full" onClick={() => setShowForm(true)}>
-          <Plus className="size-4" aria-hidden /> Post a listing
+          <Plus className="size-4" aria-hidden />{" "}
+          {kind === "offer" ? "Offer a room" : "Post that you're looking"}
         </Button>
       )}
 

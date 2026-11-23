@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { createMockListings } from "@/data/rooms.mock";
-import type { NewRoomListing, RoomListing } from "@/types/rooms";
-import { filterListings, formatAvailability, formatRent, validateNewListing } from "./rooms";
+import type { ListingKind, NewRoomListing, RoomListing } from "@/types/rooms";
+import {
+  filterListings,
+  formatAvailability,
+  formatRent,
+  listingFormCopy,
+  validateNewListing,
+} from "./rooms";
 
 const TODAY = "2026-11-17";
 
@@ -39,6 +45,30 @@ describe("validateNewListing", () => {
       /after the start/,
     );
     expect(validateNewListing({ ...input, availableUntil: "2026-01-01" }, TODAY)).toMatch(/past/);
+  });
+
+  it("needs a known kind and names the price after it", () => {
+    expect(validateNewListing({ ...input, kind: "wanted" }, TODAY)).toBeNull();
+    expect(validateNewListing({ ...input, kind: "swap" as unknown as ListingKind }, TODAY)).toMatch(
+      /offer or look/,
+    );
+    expect(validateNewListing({ ...input, kind: "wanted", rent: 0 }, TODAY)).toMatch(/^Budget/);
+  });
+});
+
+describe("listingFormCopy", () => {
+  it("follows the selected tab", () => {
+    expect(listingFormCopy("offer")).toMatchObject({
+      heading: "Offer a room",
+      priceLabel: "Rent / month (€)",
+      withPhotos: true,
+    });
+    expect(listingFormCopy("wanted")).toMatchObject({
+      heading: "Look for a room",
+      priceLabel: "Max. budget (€)",
+      fromLabel: "Needed from",
+      withPhotos: false,
+    });
   });
 });
 

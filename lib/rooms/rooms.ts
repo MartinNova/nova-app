@@ -1,16 +1,24 @@
-import { ROOM_TYPES, type NewRoomListing, type RoomFilter, type RoomListing } from "@/types/rooms";
+import {
+  ROOM_TYPES,
+  type ListingKind,
+  type NewRoomListing,
+  type RoomFilter,
+  type RoomListing,
+} from "@/types/rooms";
 
 const MAX_RENT = 5000;
 
 /** Returns an error message, or null if the listing can be posted. */
 export function validateNewListing(input: NewRoomListing, today: string): string | null {
+  if (input.kind !== "offer" && input.kind !== "wanted")
+    return "Please choose whether you offer or look for a room.";
   const title = input.title.trim();
   if (title.length < 5) return "Please give your listing a title (at least 5 characters).";
   if (title.length > 80) return "The title can have at most 80 characters.";
   if (!(input.roomType in ROOM_TYPES)) return "Please pick a room type.";
   if (!input.area.trim()) return "Please pick an area.";
   if (!Number.isInteger(input.rent) || input.rent < 1 || input.rent > MAX_RENT)
-    return `Rent must be a whole number between 1 and ${MAX_RENT} €.`;
+    return `${input.kind === "wanted" ? "Budget" : "Rent"} must be a whole number between 1 and ${MAX_RENT} €.`;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(input.availableFrom)) return "Please pick a start date.";
   if (input.availableUntil && input.availableUntil < today)
     return "The end date is already in the past.";
@@ -19,6 +27,27 @@ export function validateNewListing(input: NewRoomListing, today: string): string
   if (input.description.trim().length > 1000)
     return "The description can have at most 1000 characters.";
   return null;
+}
+
+/** Texts of the "new listing" form; the kind comes from the selected tab. */
+export function listingFormCopy(kind: ListingKind) {
+  return kind === "offer"
+    ? {
+        heading: "Offer a room",
+        titlePlaceholder: "e.g. Bright room 10 min from campus",
+        priceLabel: "Rent / month (€)",
+        fromLabel: "Available from",
+        descriptionPlaceholder: "Flatmates, furniture, distance to train/campus, house rules…",
+        withPhotos: true,
+      }
+    : {
+        heading: "Look for a room",
+        titlePlaceholder: "e.g. Looking for a room for spring semester",
+        priceLabel: "Max. budget (€)",
+        fromLabel: "Needed from",
+        descriptionPlaceholder: "Who you are, what you're looking for…",
+        withPhotos: false,
+      };
 }
 
 /** Listings that are still relevant, matching the filter, newest first. */

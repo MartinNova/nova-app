@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { resizePhoto } from "@/lib/rooms/photos";
+import { listingFormCopy } from "@/lib/rooms/rooms";
 import {
   MAX_ROOM_PHOTOS,
   ROOM_AREAS,
@@ -15,6 +16,7 @@ import {
 } from "@/types/rooms";
 
 interface NewListingFormProps {
+  /** Offer or search: follows the "Rooms offered / Looking for a room" tab. */
   kind: ListingKind;
   today: string;
   onSubmit: (input: NewRoomListing, photos: Blob[]) => Promise<void>;
@@ -24,14 +26,9 @@ interface NewListingFormProps {
 const fieldClass =
   "border-border bg-surface focus-visible:outline-brand mt-1 h-10 w-full rounded-xl border px-3 text-sm focus-visible:outline-2";
 
-/** Post a free room, or that you are looking for one. */
-export function NewListingForm({
-  kind: initialKind,
-  today,
-  onSubmit,
-  onClose,
-}: NewListingFormProps) {
-  const [kind, setKind] = useState<ListingKind>(initialKind);
+/** Post a free room, or that you are looking for one (depending on the tab). */
+export function NewListingForm({ kind, today, onSubmit, onClose }: NewListingFormProps) {
+  const copy = listingFormCopy(kind);
   const [title, setTitle] = useState("");
   const [roomType, setRoomType] = useState<RoomType>("room");
   const [area, setArea] = useState<string>(ROOM_AREAS[0]);
@@ -83,7 +80,7 @@ export function NewListingForm({
           availableUntil,
           description,
         },
-        kind === "offer" ? photos.map((p) => p.blob) : [],
+        copy.withPhotos ? photos.map((p) => p.blob) : [],
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not post the listing.");
@@ -94,18 +91,7 @@ export function NewListingForm({
   return (
     <Card className="mb-4">
       <form onSubmit={handleSubmit} className="grid gap-4">
-        <div className="grid grid-cols-2 gap-2">
-          {(["offer", "wanted"] as const).map((k) => (
-            <Button
-              key={k}
-              variant={kind === k ? "primary" : "secondary"}
-              aria-pressed={kind === k}
-              onClick={() => setKind(k)}
-            >
-              {k === "offer" ? "I offer a room" : "I'm looking"}
-            </Button>
-          ))}
-        </div>
+        <h2 className="text-base font-semibold">{copy.heading}</h2>
 
         <label className="text-sm font-medium">
           Title
@@ -114,11 +100,7 @@ export function NewListingForm({
             maxLength={80}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder={
-              kind === "offer"
-                ? "e.g. Bright room 10 min from campus"
-                : "e.g. Looking for a room for spring semester"
-            }
+            placeholder={copy.titlePlaceholder}
             className={fieldClass}
           />
         </label>
@@ -139,7 +121,7 @@ export function NewListingForm({
             </select>
           </label>
           <label className="text-sm font-medium">
-            {kind === "offer" ? "Rent / month (€)" : "Max. budget (€)"}
+            {copy.priceLabel}
             <input
               required
               type="number"
@@ -178,7 +160,7 @@ export function NewListingForm({
 
         <div className="grid grid-cols-2 gap-3">
           <label className="text-sm font-medium">
-            {kind === "offer" ? "Available from" : "Needed from"}
+            {copy.fromLabel}
             <input
               type="date"
               required
@@ -206,16 +188,12 @@ export function NewListingForm({
             onChange={(e) => setDescription(e.target.value)}
             maxLength={1000}
             rows={4}
-            placeholder={
-              kind === "offer"
-                ? "Flatmates, furniture, distance to train/campus, house rules…"
-                : "Who you are, what you're looking for…"
-            }
+            placeholder={copy.descriptionPlaceholder}
             className="border-border bg-surface focus-visible:outline-brand mt-1 w-full rounded-xl border px-3 py-2 text-sm focus-visible:outline-2"
           />
         </label>
 
-        {kind === "offer" && (
+        {copy.withPhotos && (
           <fieldset>
             <legend className="text-sm font-medium">
               Photos ({photos.length}/{MAX_ROOM_PHOTOS})
