@@ -1,4 +1,4 @@
-import { ChevronRight, CircleHelp, FileCheck } from "lucide-react";
+import { ChevronRight, Compass, FileCheck } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
@@ -29,8 +29,8 @@ export default function StudyHubPage() {
         href="/study/new-at-nova"
         className="focus-visible:outline-brand mb-3 flex items-center gap-3 rounded-3xl bg-[#0b2a4a] p-4 text-white ring-1 ring-white/10 transition focus-visible:outline-2 active:scale-[0.98]"
       >
-        <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-white text-[#0b2a4a]">
-          <CircleHelp className="size-6" aria-hidden />
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[#f9a8d4] text-[#0b2a4a]">
+          <Compass className="size-6" aria-hidden />
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-[17px] leading-tight font-semibold">New at Nova?</span>
