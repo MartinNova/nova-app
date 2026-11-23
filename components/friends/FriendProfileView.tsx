@@ -4,6 +4,7 @@ import { MessageCircle, Trophy } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { AvailabilityList } from "@/components/profile/AvailabilityList";
 import { ProfileCard } from "@/components/profile/ProfileCard";
 import { useCurrentUser } from "@/components/providers/CurrentUserProvider";
 import { Card } from "@/components/ui/Card";
@@ -64,6 +65,7 @@ export function FriendProfileView() {
   return (
     <div className="grid gap-4">
       <ProfileCard profile={p} today={current.today} />
+      <AvailabilityList profile={p} isMe={isMe} />
 
       {isMe ? (
         <Link href="/settings" className={linkClass}>

@@ -32,6 +32,28 @@ interface ListRowProps {
   detail?: React.ReactNode;
 }
 
+/** A read-only row: title on the left, value on the right (no chevron), as in iOS Settings. */
+export function InfoRow({
+  icon,
+  tone = "brand",
+  title,
+  detail,
+}: Omit<ListRowProps, "href" | "subtitle">) {
+  return (
+    <div className="group flex min-h-14 items-center gap-3.5 pl-4">
+      <span className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${TILE[tone]}`}>
+        {icon}
+      </span>
+      <span className="border-border flex min-h-14 min-w-0 flex-1 items-center gap-3 self-stretch border-b py-2 pr-4 group-last:border-b-0">
+        <span className="shrink-0 text-[17px]">{title}</span>
+        {detail && (
+          <span className="text-muted min-w-0 flex-1 text-right text-[17px]">{detail}</span>
+        )}
+      </span>
+    </div>
+  );
+}
+
 /** One tappable row. Separators start after the icon, as in iOS. */
 export function ListRow({ href, icon, tone = "brand", title, subtitle, detail }: ListRowProps) {
   return (

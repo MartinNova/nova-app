@@ -7,6 +7,7 @@ import { useCurrentUser } from "@/components/providers/CurrentUserProvider";
 import { Card, LinkCard } from "@/components/ui/Card";
 import { profileService } from "@/lib/services/profile.service";
 import type { Profile } from "@/types/profile";
+import { AvailabilityList } from "./AvailabilityList";
 import { ProfileCard } from "./ProfileCard";
 
 /** Result of loading one user's profile; `userId` tells which user it belongs to. */
@@ -59,7 +60,10 @@ export function MyAreaView() {
       {!current ? (
         <div className="bg-border h-64 animate-pulse rounded-2xl" aria-busy="true" />
       ) : profile ? (
-        <ProfileCard profile={profile} today={current.today} />
+        <>
+          <ProfileCard profile={profile} today={current.today} />
+          <AvailabilityList profile={profile} isMe />
+        </>
       ) : (
         <Card className="text-center">
           <p className="font-semibold">Profile unavailable</p>
