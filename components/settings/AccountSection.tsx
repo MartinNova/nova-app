@@ -54,7 +54,7 @@ export function AccountSection({ email }: { email: string }) {
   return (
     <Section title="Account" description={`Signed in as ${email}`}>
       <form
-        className="grid gap-2"
+        className="grid grid-cols-1 gap-2"
         onSubmit={(e) => {
           e.preventDefault();
           void run(async () => {
@@ -79,7 +79,7 @@ export function AccountSection({ email }: { email: string }) {
       </form>
 
       <form
-        className="grid gap-2"
+        className="grid grid-cols-1 gap-2"
         onSubmit={(e) => {
           e.preventDefault();
           const problem = validatePassword(newPassword);

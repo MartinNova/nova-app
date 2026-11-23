@@ -195,7 +195,7 @@ export function AboutSection({ form, set, userId }: SectionProps & { userId: str
         onChange={(v) => set("languages", v)}
       />
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label className="text-sm font-medium">
           Instagram
           <input
@@ -236,7 +236,7 @@ export function ContactSection({ form, set }: SectionProps) {
   }
 
   return (
-    <div className="grid gap-2">
+    <div className="grid grid-cols-1 gap-2">
       <GroupedList title="Contact">
         <InputRow
           icon={<Phone className="size-[18px]" aria-hidden />}
@@ -319,7 +319,7 @@ export function StudySection({ form, set }: SectionProps) {
           ))}
         </select>
       </label>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <MonthPicker label="Start" value={form.studyStart} onChange={(v) => set("studyStart", v)} />
         <MonthPicker
           label="Expected end"
@@ -425,7 +425,7 @@ const FIELD_ROWS: Record<PrivateField, { icon: React.ReactNode; tone: TileTone }
 /** Settings -> "Who can see what": Everyone / Friends / Only me per profile detail. */
 export function FieldPrivacySection({ form, set }: SectionProps) {
   return (
-    <div className="grid gap-2">
+    <div className="grid grid-cols-1 gap-2">
       <GroupedList title="Who can see what">
         {(Object.entries(PRIVATE_FIELDS) as [PrivateField, string][]).map(([field, label]) => (
           <SelectRow
