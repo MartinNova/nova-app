@@ -18,6 +18,9 @@ export const metadata: Metadata = {
   description: APP_DESCRIPTION,
   // iPhone: open full screen from the home screen, with the app's short name under the icon.
   appleWebApp: { capable: true, title: APP_SHORT_NAME, statusBarStyle: "default" },
+  // Shared links show a preview card (image: app/opengraph-image.tsx).
+  openGraph: { title: APP_NAME, description: APP_DESCRIPTION, siteName: APP_NAME, type: "website" },
+  twitter: { card: "summary_large_image" },
 };
 
 export const viewport: Viewport = {
