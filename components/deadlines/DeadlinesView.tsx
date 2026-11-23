@@ -30,6 +30,14 @@ const linkClass =
 
 const noSubscription = () => () => {};
 
+/** 3650 -> "€3,650". */
+const formatEur = (amount: number) =>
+  new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: "EUR",
+    maximumFractionDigits: 0,
+  }).format(amount);
+
 /** Downloads an .ics file; phones offer to add the events (with reminders) to the calendar. */
 function downloadIcs(deadlines: Deadline[], fileName: string) {
   const stamp = new Date().toISOString().replace(/[-:]/g, "").slice(0, 15) + "Z";
@@ -54,6 +62,9 @@ function DeadlineRow({ deadline, today }: { deadline: Deadline; today: string })
       </div>
       <div className="min-w-0 flex-1">
         <p className={`font-semibold ${level === "past" ? "text-muted" : ""}`}>{deadline.title}</p>
+        {deadline.amountEur !== undefined && level !== "past" && (
+          <p className="text-sm font-medium">{formatEur(deadline.amountEur)}</p>
+        )}
         <p className="text-muted truncate text-sm">
           {[deadline.note, formatDay(deadline.date, { year: "numeric" })]
             .filter(Boolean)
@@ -111,6 +122,11 @@ export function DeadlinesView() {
             Due {formatDay(next.date, { weekday: "long", day: "numeric", month: "long" })} ·{" "}
             <span className="font-semibold">{relativeDay(next.date, today)}</span>
           </p>
+          {next.amountEur !== undefined && (
+            <p className="mt-1">
+              Amount: <span className="font-semibold">{formatEur(next.amountEur)}</span>
+            </p>
+          )}
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
             <Button onClick={() => downloadIcs(upcoming, "nova-payment-deadlines.ics")}>
               <CalendarPlus className="size-4" aria-hidden /> Add all reminders to calendar
@@ -162,7 +178,7 @@ export function DeadlinesView() {
       )}
 
       <p className="text-muted text-xs">
-        Due dates from netPA (Masters, 2026/27). Amounts differ per student, so check yours in
+        Due dates from netPA (Masters, 2026/27). Amounts may differ per student, so check yours in
         netPA. Nothing about your payments is stored in this app.
       </p>
     </div>

@@ -13,4 +13,6 @@ export interface Deadline {
   kind: DeadlineKind;
   /** Short hint shown under the title. */
   note?: string;
+  /** Standard amount in euro, when it is the same for everyone. */
+  amountEur?: number;
 }
