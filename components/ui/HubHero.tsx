@@ -33,6 +33,13 @@ export function HubHero({
     <section className="relative mb-6">
       {/* Up under the top bar (48px + the 8px page padding) and out to the screen edges. */}
       <div className="hub-hero-photo relative -mx-4 -mt-[calc(3.5rem+env(safe-area-inset-top))] h-[min(32vh,250px)] overflow-hidden sm:h-[240px]">
+        {/* Soft shade behind the white logo of the top bar (overview pages only). */}
+        {!backHref && (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 top-0 z-10 h-[calc(6rem+env(safe-area-inset-top))] bg-gradient-to-b from-black/40 to-transparent"
+          />
+        )}
         <div className={`absolute inset-0 ${cropTop ? "origin-bottom scale-[1.35]" : ""}`}>
           <Image
             src={image.src}

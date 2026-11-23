@@ -6,8 +6,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { usePageTitle } from "@/components/providers/PageTitleProvider";
 import { APP_SHORT_NAME } from "@/lib/config/app";
-import { labelForHref } from "@/lib/config/navigation";
+import { MAIN_NAV, labelForHref } from "@/lib/config/navigation";
 import { AccountSwitcher } from "./AccountSwitcher";
+
+/** Overview pages whose photo reaches up under the bar: the logo is white there. */
+const PHOTO_PAGES = ["/study", "/campus", "/sport"];
 
 /**
  * iOS-style navigation bar: "‹ Back" on the left, the small page title in the middle
@@ -17,11 +20,15 @@ export function Header() {
   const pathname = usePathname();
   const { pageTitle } = usePageTitle();
   const isHome = pathname === "/";
+  // The logo sits top left on every main tab page (the others show "‹ Back" there).
+  const showLogo = MAIN_NAV.some((item) => item.href === pathname);
   const collapsed = pageTitle !== null && !pageTitle.largeTitleVisible;
   // Over a page photo the bar is see-through and its buttons float as glass capsules (iOS 26).
   const overPhoto = Boolean(pageTitle?.immersive) && !collapsed;
   const capsule = overPhoto ? "glass rounded-full shadow-sm" : "";
   const backHref = pageTitle?.backHref;
+  // White over the photo; black (white in dark mode) on plain pages and once the bar turns to glass.
+  const whiteLogo = PHOTO_PAGES.includes(pathname) && !collapsed;
 
   return (
     <header
@@ -44,16 +51,16 @@ export function Header() {
               <span className="truncate">{labelForHref(backHref)}</span>
             </Link>
           ) : (
-            isHome && (
+            showLogo && (
               <Link href="/" aria-label={APP_SHORT_NAME} className="flex items-center px-2">
-                {/* White background blends away in light mode; inverted + screen in dark mode. */}
+                {/* Transparent black logo: `invert` turns it white (photos, dark mode). */}
                 <Image
                   priority
                   src="/nova-logo.png"
                   alt="Nova School of Business & Economics"
-                  width={840}
-                  height={160}
-                  className="h-7 w-[147px] max-w-none shrink-0 mix-blend-multiply dark:mix-blend-screen dark:invert"
+                  width={572}
+                  height={80}
+                  className={`h-[22px] w-auto max-w-none shrink-0 ${whiteLogo ? "invert" : "dark:invert"}`}
                 />
               </Link>
             )

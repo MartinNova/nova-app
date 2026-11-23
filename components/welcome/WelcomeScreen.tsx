@@ -10,14 +10,14 @@ import { StudentCount } from "./StudentCount";
 export function WelcomeScreen() {
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-6 pt-[max(env(safe-area-inset-top),2.5rem)] pb-[max(env(safe-area-inset-bottom),1.5rem)]">
-      {/* White background blends away in light mode; inverted + screen in dark mode. */}
+      {/* Transparent black logo; turned white in dark mode. */}
       <Image
         priority
         src="/nova-logo.png"
         alt="Nova School of Business & Economics"
-        width={840}
-        height={160}
-        className="h-9 w-[189px] max-w-none mix-blend-multiply dark:mix-blend-screen dark:invert"
+        width={572}
+        height={80}
+        className="h-7 w-auto max-w-none dark:invert"
       />
 
       <h1 className="mt-8 text-4xl leading-tight font-bold tracking-tight">
