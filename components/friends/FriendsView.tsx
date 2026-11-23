@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Users } from "lucide-react";
+import { MessageCircle, Search, Users } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useCurrentUser } from "@/components/providers/CurrentUserProvider";
@@ -183,6 +183,15 @@ export function FriendsView() {
                   p={p}
                   today={loaded.today}
                   online={presence.online.has(p.userId)}
+                  trailing={
+                    <Link
+                      href={`/friends/chat?u=${p.username}`}
+                      aria-label={`Message ${p.firstName || `@${p.username}`}`}
+                      className="bg-brand/10 text-brand hover:bg-brand/15 focus-visible:outline-brand flex size-10 shrink-0 items-center justify-center rounded-full transition focus-visible:outline-2 active:scale-90"
+                    >
+                      <MessageCircle className="size-5" aria-hidden />
+                    </Link>
+                  }
                 />
               ))}
             </ul>
