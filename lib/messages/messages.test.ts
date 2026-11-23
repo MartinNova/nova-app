@@ -4,7 +4,9 @@ import {
   badgeLabel,
   formatMessageTime,
   groupConversations,
+  listingHref,
   messagePreview,
+  parseListingRef,
   unreadCount,
   validateMessage,
 } from "./messages";
@@ -26,6 +28,7 @@ const msg = (
   readAt,
   replyToId: null,
   forwarded: false,
+  listing: null,
   reactions: [],
 });
 
@@ -92,5 +95,31 @@ describe("badgeLabel", () => {
     expect(badgeLabel(3)).toBe("3");
     expect(badgeLabel(99)).toBe("99");
     expect(badgeLabel(120)).toBe("99+");
+  });
+});
+
+describe("listing in a message", () => {
+  const ref = {
+    id: "8a6c1e2e-1111-4222-8333-944455556666",
+    title: "Bright room 10 min from campus",
+    subtitle: "620 €/month · Carcavelos",
+    photo: "https://example.supabase.co/storage/v1/object/public/room-photos/a.jpg",
+  };
+
+  it("keeps a well-formed listing and links to it", () => {
+    expect(parseListingRef(ref)).toEqual(ref);
+    expect(listingHref(ref)).toBe(`/campus/rooms/listing?id=${ref.id}`);
+  });
+
+  it("drops anything malformed", () => {
+    expect(parseListingRef(null)).toBeNull();
+    expect(parseListingRef("x")).toBeNull();
+    expect(parseListingRef({ ...ref, id: "../../evil" })).toBeNull();
+    expect(parseListingRef({ ...ref, title: "" })).toBeNull();
+  });
+
+  it("only keeps safe picture links", () => {
+    expect(parseListingRef({ ...ref, photo: "javascript:alert(1)" })?.photo).toBeNull();
+    expect(parseListingRef({ ...ref, photo: undefined })?.photo).toBeNull();
   });
 });

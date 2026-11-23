@@ -1,5 +1,5 @@
 import { MAX_DEMO_FILE_BYTES, MAX_FILE_BYTES, validateFile } from "@/lib/messages/attachments";
-import { validateMessage } from "@/lib/messages/messages";
+import { parseListingRef, validateMessage } from "@/lib/messages/messages";
 import { withReaction } from "@/lib/messages/reactions";
 import { readJSON, writeJSON } from "@/lib/storage";
 import { getSupabase, liveChannel } from "@/lib/supabase/client";
@@ -27,6 +27,7 @@ const loadLocal = () =>
     file: m.file ?? null,
     replyToId: m.replyToId ?? null,
     forwarded: m.forwarded ?? false,
+    listing: parseListingRef(m.listing),
     reactions: m.reactions ?? [],
   }));
 function saveLocal(messages: Message[]) {
@@ -64,6 +65,7 @@ const localMessageService: MessageService = {
       readAt: null,
       replyToId: options?.replyToId ?? null,
       forwarded: options?.forwarded ?? false,
+      listing: options?.listing ?? null,
       reactions: [],
     };
     saveLocal([...loadLocal(), message]);
@@ -128,6 +130,7 @@ interface MessageRow {
   read_at: string | null;
   reply_to_id?: string | null;
   forwarded?: boolean;
+  listing?: unknown;
 }
 
 /** Turns rows into messages; picture and file paths become short-lived signed links. */
@@ -158,6 +161,7 @@ async function rowsToMessages(rows: MessageRow[]): Promise<Message[]> {
     readAt: row.read_at,
     replyToId: row.reply_to_id ?? null,
     forwarded: row.forwarded ?? false,
+    listing: parseListingRef(row.listing),
     reactions: reactions.get(row.id) ?? [],
   }));
 }
@@ -213,6 +217,7 @@ const supabaseMessageService: MessageService = {
         ...columns,
         ...(options?.replyToId && { reply_to_id: options.replyToId }),
         ...(options?.forwarded && { forwarded: true }),
+        ...(options?.listing && { listing: options.listing }),
       })
       .select("*")
       .single();

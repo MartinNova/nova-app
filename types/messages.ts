@@ -22,10 +22,25 @@ export interface Reaction {
   emoji: string;
 }
 
+/**
+ * A room listing a message is about (sent from "Message" on the listing). A snapshot, so the
+ * chat still shows what it was about after the listing changes or is taken down.
+ */
+export interface ListingRef {
+  id: string;
+  title: string;
+  /** e.g. "620 €/month · Carcavelos" */
+  subtitle: string;
+  /** First photo, if any. */
+  photo: string | null;
+}
+
 /** Extras when sending: a reply to an earlier message of the same chat, or a forwarded copy. */
 export interface SendOptions {
   replyToId?: string | null;
   forwarded?: boolean;
+  /** The room listing this message is about. */
+  listing?: ListingRef | null;
 }
 
 export interface Message {
@@ -46,6 +61,8 @@ export interface Message {
   replyToId: string | null;
   /** Shown as "Forwarded" above the message. */
   forwarded: boolean;
+  /** Shown as a card above the text, linking to the listing; null = not about a listing. */
+  listing: ListingRef | null;
   reactions: Reaction[];
 }
 
