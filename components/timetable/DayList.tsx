@@ -1,6 +1,7 @@
 import { Trash2 } from "lucide-react";
 import { formatDay } from "@/lib/timetable/dates";
 import type { TimetableEvent } from "@/types/timetable";
+import type { EventStyle } from "./categoryStyles";
 import { EventRow } from "./EventRow";
 
 /** Details of the selected day, shown below the calendar. */
@@ -8,12 +9,15 @@ export function DayList({
   date,
   today,
   events,
+  styleOf,
   onRemove,
   onOpenLecture,
 }: {
   date: string;
   today: string;
   events: TimetableEvent[];
+  /** Colours of an event (category colour or course colour). */
+  styleOf: (event: TimetableEvent) => EventStyle;
   /** Called for events the user added by hand (ids start with "event:"). */
   onRemove?: (id: string) => void;
   /** Opens the detail sheet of a weekly lecture. */
@@ -33,7 +37,7 @@ export function DayList({
             onRemove && event.id.startsWith("event:") ? (
               <div key={event.id} className="flex items-center gap-1">
                 <ul className="min-w-0 flex-1">
-                  <EventRow event={event} />
+                  <EventRow event={event} style={styleOf(event)} />
                 </ul>
                 <button
                   type="button"
@@ -48,6 +52,7 @@ export function DayList({
               <EventRow
                 key={event.id}
                 event={event}
+                style={styleOf(event)}
                 onClick={
                   onOpenLecture && event.lectureId
                     ? () => onOpenLecture(event.lectureId!)

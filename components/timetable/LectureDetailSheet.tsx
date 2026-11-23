@@ -3,10 +3,12 @@
 import { ExternalLink, MapPin, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { LABEL_COLORS } from "@/types/todo";
 import { WEEKDAYS } from "@/lib/timetable/dates";
 import { normalizeUrl } from "@/lib/timetable/links";
 import { getTerm } from "@/lib/timetable/terms";
 import type { Lecture, LecturePatch } from "@/types/timetable";
+import { COURSE_STYLE } from "./categoryStyles";
 import { Sheet } from "./Sheet";
 
 const INPUT =
@@ -118,6 +120,43 @@ export function LectureDetailSheet({
             placeholder="Professor, grading, readings, group members, anything…"
             className={`${INPUT} resize-y py-2`}
           />
+        </section>
+
+        <section>
+          <p id="course-colour-label" className="mb-1.5 text-sm font-medium">
+            Colour
+          </p>
+          <div
+            role="group"
+            aria-labelledby="course-colour-label"
+            className="flex flex-wrap items-center gap-2"
+          >
+            <button
+              type="button"
+              aria-pressed={!lecture.color}
+              onClick={() => onSave(lecture.id, { color: undefined })}
+              className={`focus-visible:outline-brand h-7 rounded-full border px-3 text-xs font-medium focus-visible:outline-2 ${
+                lecture.color ? "border-border text-muted" : "border-brand text-brand"
+              }`}
+            >
+              Auto
+            </button>
+            {LABEL_COLORS.map(({ value, label }) => (
+              <button
+                key={value}
+                type="button"
+                aria-label={label}
+                aria-pressed={lecture.color === value}
+                onClick={() => onSave(lecture.id, { color: value })}
+                className={`focus-visible:outline-brand size-7 rounded-full focus-visible:outline-2 ${COURSE_STYLE[value].dot} ${
+                  lecture.color === value ? "ring-brand ring-2 ring-offset-2" : ""
+                }`}
+              />
+            ))}
+          </div>
+          <p className="text-muted mt-1.5 text-xs">
+            Shown in the calendar when “Colour lectures by course” is switched on.
+          </p>
         </section>
 
         {error && <p className="text-sm text-red-600">{error}</p>}

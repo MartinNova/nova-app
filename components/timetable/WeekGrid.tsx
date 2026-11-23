@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { addDays, formatDay } from "@/lib/timetable/dates";
 import { layoutTimedEvents } from "@/lib/timetable/schedule";
 import type { TimetableEvent } from "@/types/timetable";
-import { CATEGORY_STYLE } from "./categoryStyles";
+import type { EventStyle } from "./categoryStyles";
 
 const HOUR_PX = 44;
 const HOURS = Array.from({ length: 24 }, (_, h) => h);
@@ -16,6 +16,8 @@ interface WeekGridProps {
   today: string;
   selected: string;
   events: TimetableEvent[];
+  /** Colours of an event (category colour or course colour). */
+  styleOf: (event: TimetableEvent) => EventStyle;
   onSelectDay: (date: string) => void;
   /** Tapping an empty slot: add something on this day at this hour. */
   onCreateAt: (date: string, hour: number) => void;
@@ -29,7 +31,8 @@ interface WeekGridProps {
  * Weekend columns only appear when something is scheduled.
  */
 export function WeekGrid(props: WeekGridProps) {
-  const { weekStart, today, selected, events, onSelectDay, onCreateAt, onOpenLecture } = props;
+  const { weekStart, today, selected, events, styleOf, onSelectDay, onCreateAt, onOpenLecture } =
+    props;
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const allDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -104,7 +107,7 @@ export function WeekGrid(props: WeekGridProps) {
                     type="button"
                     onClick={() => onSelectDay(day)}
                     title={e.start ? `${e.start} ${e.title}` : e.title}
-                    className={`block w-full truncate rounded px-1 py-0.5 text-left text-[11px] font-medium ${CATEGORY_STYLE[e.category].chip}`}
+                    className={`block w-full truncate rounded px-1 py-0.5 text-left text-[11px] font-medium ${styleOf(e).chip}`}
                   >
                     {e.start && <span className="opacity-90">{e.start} </span>}
                     {e.title}
@@ -162,7 +165,7 @@ export function WeekGrid(props: WeekGridProps) {
                       if (p.event.lectureId) onOpenLecture(p.event.lectureId);
                     }}
                     title={`${p.event.start} ${p.event.title}`}
-                    className={`absolute overflow-hidden rounded-md px-1 py-0.5 text-left text-[11px] leading-tight shadow-sm ${CATEGORY_STYLE[p.event.category].chip}`}
+                    className={`absolute overflow-hidden rounded-md px-1 py-0.5 text-left text-[11px] leading-tight shadow-sm ${styleOf(p.event).chip}`}
                     style={{
                       top: top + 1,
                       height,

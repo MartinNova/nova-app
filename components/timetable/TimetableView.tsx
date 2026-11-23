@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/Card";
 import { timetableService } from "@/lib/services/timetable.service";
 import { readJSON, writeJSON } from "@/lib/storage";
 import { addDays, addMonths, formatDay, startOfWeek, todayInLisbon } from "@/lib/timetable/dates";
+import { courseColorMap } from "@/lib/timetable/colors";
 import { eventsBetween, filterByCategory } from "@/lib/timetable/schedule";
 import { suggestTerm } from "@/lib/timetable/terms";
 import type {
@@ -13,9 +14,12 @@ import type {
   NewEvent,
   NewLecture,
   TimetableData,
+  TimetableEvent,
 } from "@/types/timetable";
 import { AddDialog, type AddDraft } from "./AddDialog";
+import { eventStyle } from "./categoryStyles";
 import { CategoryFilter } from "./CategoryFilter";
+import { CourseColorToggle } from "./CourseColorToggle";
 import { EventRow } from "./EventRow";
 import { CalendarHeader, type CalendarView } from "./CalendarHeader";
 import { DayList } from "./DayList";
@@ -26,6 +30,7 @@ import { WeekGrid } from "./WeekGrid";
 
 const FILTER_KEY = "timetable:filter";
 const VIEW_KEY = "timetable:view";
+const COURSE_COLORS_KEY = "timetable:course-colors";
 const ALL: EventCategory[] = ["lecture", "exam", "deadline", "holiday"];
 type Tab = "schedule" | "manage";
 
@@ -37,6 +42,8 @@ export function TimetableView() {
   const [selected, setSelected] = useState<string | null>(null);
   const [view, setView] = useState<CalendarView>("week");
   const [visible, setVisible] = useState<EventCategory[]>(ALL);
+  /** Option: every course in its own colour (off = lectures keep the navy category colour). */
+  const [byCourse, setByCourse] = useState(false);
   const [tab, setTab] = useState<Tab>("schedule");
   /** Open "add" sheet (null = closed). */
   const [draft, setDraft] = useState<AddDraft | null>(null);
@@ -52,6 +59,7 @@ export function TimetableView() {
       setSelected(now);
       setView(readJSON<CalendarView>(VIEW_KEY, "week"));
       setVisible(readJSON<EventCategory[]>(FILTER_KEY, ALL));
+      setByCourse(readJSON<boolean>(COURSE_COLORS_KEY, false));
     });
   }, []);
 
@@ -93,6 +101,14 @@ export function TimetableView() {
     setVisible(next);
     writeJSON(FILTER_KEY, next);
   }
+
+  function toggleByCourse() {
+    setByCourse(!byCourse);
+    writeJSON(COURSE_COLORS_KEY, !byCourse);
+  }
+
+  const courseColors = byCourse ? courseColorMap(data.lectures) : null;
+  const styleOf = (event: TimetableEvent) => eventStyle(event, courseColors);
 
   function changeView(next: CalendarView) {
     setView(next);
@@ -186,7 +202,7 @@ export function TimetableView() {
                       {formatDay(event.date, { weekday: "short", day: "numeric", month: "short" })}
                     </p>
                     <ul>
-                      <EventRow event={event} />
+                      <EventRow event={event} style={styleOf(event)} />
                     </ul>
                   </div>
                 ))}
@@ -195,6 +211,9 @@ export function TimetableView() {
           )}
 
           <CategoryFilter visible={visible} onToggle={toggle} />
+          {data.lectures.length > 0 && (
+            <CourseColorToggle on={byCourse} onToggle={toggleByCourse} />
+          )}
           <CalendarHeader
             title={title}
             view={view}
@@ -211,6 +230,7 @@ export function TimetableView() {
               today={today}
               selected={selected}
               events={periodEvents}
+              styleOf={styleOf}
               onSelectDay={setSelected}
               onCreateAt={(date, hour) => setDraft({ date, hour })}
               onOpenLecture={setOpenLectureId}
@@ -221,6 +241,7 @@ export function TimetableView() {
               today={today}
               selected={selected}
               events={periodEvents}
+              styleOf={styleOf}
               onSelectDay={setSelected}
             />
           )}
@@ -228,6 +249,7 @@ export function TimetableView() {
             date={selected}
             today={today}
             events={periodEvents.filter((e) => e.date === selected)}
+            styleOf={styleOf}
             onRemove={handlers.onRemoveEvent}
             onOpenLecture={setOpenLectureId}
           />

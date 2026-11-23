@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Lecture } from "@/types/timetable";
 import { addDays, addMonths, startOfMonth, startOfWeek, weekday } from "./dates";
 import { easterSunday, portugueseHolidays } from "./holidays";
+import { AUTO_COURSE_COLORS, courseColorMap } from "./colors";
 import { parseIcs, parseIcsDate } from "./ics";
 import { eventsBetween, expandLecture, filterByCategory, layoutTimedEvents } from "./schedule";
 import { normalizeUrl } from "./links";
@@ -198,5 +199,37 @@ describe("normalizeUrl", () => {
   it("rejects empty and unsafe links", () => {
     expect(normalizeUrl("  ")).toBeNull();
     expect(normalizeUrl("javascript:alert(1)")).toBeNull();
+  });
+});
+
+describe("course colours", () => {
+  const lecture = (id: string, color?: Lecture["color"]): Lecture => ({
+    id,
+    title: id,
+    weekday: 1,
+    start: "09:00",
+    end: "10:30",
+    termId: "t",
+    color,
+  });
+
+  it("gives every course without an own colour a different automatic colour", () => {
+    const colors = courseColorMap([lecture("a"), lecture("b"), lecture("c")]);
+    expect(new Set(colors.values()).size).toBe(3);
+  });
+
+  it("keeps a picked colour and does not hand it out again", () => {
+    const colors = courseColorMap([lecture("a"), lecture("b", "blue"), lecture("c")]);
+    expect(colors.get("b")).toBe("blue");
+    expect(colors.get("a")).not.toBe("blue");
+    expect(colors.get("c")).not.toBe("blue");
+    expect(colors.get("a")).not.toBe(colors.get("c"));
+  });
+
+  it("starts repeating colours only when there are more courses than colours", () => {
+    const many = Array.from({ length: 12 }, (_, i) => lecture(`l${i}`));
+    const colors = courseColorMap(many);
+    expect(colors.size).toBe(12);
+    expect(new Set(colors.values()).size).toBe(AUTO_COURSE_COLORS.length);
   });
 });
