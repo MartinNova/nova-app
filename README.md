@@ -51,15 +51,18 @@ known vulnerability (`npm audit`). GitHub Actions are pinned to commit SHAs.
 | `npm run build`     | Production build                             |
 | `npm audit`         | Check dependencies for known vulnerabilities |
 
-### Demo accounts
+### Accounts and demo mode
 
-There is no real login yet. Switch accounts in the header. The repo ships four **team placeholder**
-accounts and six fictional **demo students**. To show your real names and student IDs locally
-(e.g. in the presentation), set `NEXT_PUBLIC_TEAM_MEMBERS` in `.env.local`. It is never committed.
+The live app uses real accounts: sign up with e-mail and password (Supabase Auth, see
+[docs/accounts.md](docs/accounts.md)). Without the Supabase keys in `.env.local` the app runs in
+**demo mode**: data stays in the browser and you switch accounts in the header. Demo mode ships four
+**team placeholder** accounts and six fictional **demo students**. To show your real names and
+student IDs there (e.g. in the presentation), set `NEXT_PUBLIC_TEAM_MEMBERS` in `.env.local`. It is
+never committed.
 
 ## Tests
 
-`npm test` runs 200+ unit tests (Vitest) on every pull request and on `main` (see CI). They cover
+`npm test` runs 450+ unit tests (Vitest) on every pull request and on `main` (see CI). They cover
 the accepted path, the **rejected** actions and the **edge cases** of each workflow:
 
 | Area                         | Accepted                                                 | Rejected / edge cases                                                                                                                                            | Files                                                 |
