@@ -16,7 +16,8 @@ interface RoomCardProps {
 export function RoomCard({ listing, poster, today }: RoomCardProps) {
   const href = `/campus/rooms/listing?id=${listing.id}`;
   return (
-    <article className="group border-border bg-surface hover:border-brand overflow-hidden rounded-2xl border shadow-sm transition-colors">
+    // Full height of the grid row, so cards next to each other end at the same line.
+    <article className="group border-border bg-surface hover:border-brand flex flex-col overflow-hidden rounded-2xl border shadow-sm transition-colors">
       {listing.photos.length > 0 ? (
         <PhotoGallery variant="card" photos={listing.photos} href={href} title={listing.title} />
       ) : (
@@ -31,7 +32,7 @@ export function RoomCard({ listing, poster, today }: RoomCardProps) {
           </Link>
         )
       )}
-      <Link href={href} className="grid gap-2 p-4">
+      <Link href={href} className="flex flex-1 flex-col gap-2 p-4">
         <p className="font-semibold">{listing.title}</p>
         <p className="text-brand text-lg font-bold">{formatRent(listing)}</p>
         <div className="text-muted grid gap-1 text-sm">
@@ -44,8 +45,9 @@ export function RoomCard({ listing, poster, today }: RoomCardProps) {
             {formatAvailability(listing, today)}
           </p>
         </div>
+        {/* Always at the bottom of the card, however long the title or area is. */}
         {poster && (
-          <p className="text-muted flex items-center gap-2 text-sm">
+          <p className="text-muted mt-auto flex items-center gap-2 pt-1 text-sm">
             <Avatar
               firstName={poster.firstName}
               lastName={poster.lastName}
