@@ -1,5 +1,6 @@
-import { FileCheck } from "lucide-react";
+import { ChevronRight, FileCheck, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
 import { HubHero } from "@/components/ui/HubHero";
 import { TILE_COLORS, Tile } from "@/components/ui/Tile";
@@ -23,6 +24,22 @@ export default function StudyHubPage() {
         }}
         cropTop
       />
+      {/* For students who just started: one place with links, contacts and clubs. */}
+      <Link
+        href="/study/new-at-nova"
+        className="focus-visible:outline-brand mb-3 flex items-center gap-3 rounded-3xl bg-gradient-to-br from-[#0b2a4a] to-[#0a84ff] p-4 text-white shadow-sm transition focus-visible:outline-2 active:scale-[0.98]"
+      >
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-white/15">
+          <Sparkles className="size-6" aria-hidden />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[17px] leading-tight font-semibold">New at Nova?</span>
+          <span className="mt-0.5 block text-sm leading-snug text-white/85">
+            Your apps, who to ask and clubs to join, all in one place.
+          </span>
+        </span>
+        <ChevronRight className="size-5 shrink-0 text-white/80" aria-hidden />
+      </Link>
       <div className="grid grid-cols-2 gap-3">
         {STUDY_MODULES.map(({ href, label, description, icon: Icon, status }, i) => (
           <Tile
