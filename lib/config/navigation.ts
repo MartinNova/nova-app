@@ -79,7 +79,7 @@ export const STUDY_MODULES: SubModule[] = [
   },
   {
     href: "/study/deadlines",
-    label: "Deadlines & Payments",
+    label: "Payment deadlines",
     description: "Tuition instalments from netPA with countdowns and calendar reminders.",
     icon: Receipt,
     status: "live",
