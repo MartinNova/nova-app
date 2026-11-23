@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarPlus } from "lucide-react";
+import { CalendarPlus, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCurrentUser } from "@/components/providers/CurrentUserProvider";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
 import { PLAYTOMIC_HOME } from "@/lib/padel/clubs";
-import { fromISODate, upcomingDates } from "@/lib/padel/dates";
+import { firstDayWithMatch, fromISODate, upcomingDates } from "@/lib/padel/dates";
 import { filterMatches } from "@/lib/padel/matches";
 import { padelService } from "@/lib/services/padel.service";
 import { celebrate } from "@/lib/ui/confetti";
@@ -46,7 +46,15 @@ export function PadelView() {
       .then((list) => {
         const days = upcomingDates(new Date(), DAYS_SHOWN);
         setDates(days);
-        setSelectedDate((current) => current || days[0]);
+        // Open on the first day with a match, so courts posted for later show up right away.
+        setSelectedDate(
+          (current) =>
+            current ||
+            firstDayWithMatch(
+              days,
+              list.map((m) => m.date),
+            ),
+        );
         setMatches(list);
       });
   }, [userId]);
@@ -76,6 +84,8 @@ export function PadelView() {
     return result;
   }, [levelMatches]);
   const dayMatches = levelMatches.filter((m) => m.date === selectedDate);
+  // levelMatches is sorted by date and time, so this is the earliest match after this day.
+  const nextMatch = levelMatches.find((m) => m.date > selectedDate && dates?.includes(m.date));
 
   async function run(matchId: string, action: () => Promise<unknown>, success?: string) {
     setBusyId(matchId);
@@ -202,6 +212,22 @@ export function PadelView() {
         <Card className="py-8 text-center">
           <p className="font-semibold">No matches on this day</p>
           <p className="text-muted mt-1 text-sm">Booked a court? Post it and find players.</p>
+          {nextMatch && (
+            <button
+              type="button"
+              onClick={() => setSelectedDate(nextMatch.date)}
+              className="bg-brand/10 text-brand focus-visible:outline-brand mt-4 inline-flex items-center gap-1 rounded-full px-4 py-2 text-sm font-medium transition focus-visible:outline-2 active:scale-95"
+            >
+              Next match:{" "}
+              {fromISODate(nextMatch.date).toLocaleDateString("en-GB", {
+                weekday: "short",
+                day: "numeric",
+                month: "short",
+              })}{" "}
+              · {nextMatch.time}
+              <ChevronRight className="size-4" aria-hidden />
+            </button>
+          )}
         </Card>
       ) : (
         <div className="grid gap-3">

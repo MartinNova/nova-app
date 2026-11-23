@@ -18,3 +18,11 @@ export function fromISODate(iso: string): Date {
   const [y, m, d] = iso.split("-").map(Number);
   return new Date(y, m - 1, d);
 }
+
+/**
+ * The day the calendar opens on: the first of `days` that has a match, so courts posted for
+ * later in the week are seen right away. Falls back to today when no day has one.
+ */
+export function firstDayWithMatch(days: string[], matchDates: string[]): string {
+  return days.find((day) => matchDates.includes(day)) ?? days[0];
+}
