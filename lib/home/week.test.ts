@@ -6,6 +6,7 @@ import { todoService } from "@/lib/services/todo.service";
 import { writeJSON } from "@/lib/storage";
 import type { PadelMatch } from "@/types/padel";
 import type { Run } from "@/types/running";
+import type { Todo } from "@/types/todo";
 
 const query = vi.hoisted(() => ({ select: vi.fn(), gte: vi.fn(), lte: vi.fn(), eq: vi.fn() }));
 vi.mock("@/lib/supabase/client", () => ({ getSupabase: () => ({ from: () => query }) }));
@@ -137,6 +138,26 @@ describe("saved personal sources", () => {
     await todoService.updateTodo(task.id, { done: false });
     await todoService.deleteTodo(task.id);
     expect((await loadWeek(from, to, null, "accounts")).events).toEqual([]);
+  });
+  it("signed in, shows tasks from the account even when this browser has none saved", async () => {
+    expect(window.localStorage.getItem("campus-match:todo-todos-v2")).toBeNull();
+    const fromAccount = vi.spyOn(todoService, "listTodos").mockResolvedValue([
+      {
+        id: "account-task",
+        listId: "l",
+        title: "Hand in essay",
+        dueDate: from,
+        done: false,
+        priority: "normal",
+        labelIds: [],
+      } as unknown as Todo,
+    ]);
+    query.eq.mockResolvedValue({ data: [], error: null });
+    const week = await loadWeek(from, to, "me", "accounts");
+    expect(week.events.map((e) => e.title)).toEqual(["Hand in essay"]);
+    // Without an account an empty browser still means no tasks (no example tasks either).
+    expect((await loadWeek(from, to, null, "demo")).events).toEqual([]);
+    fromAccount.mockRestore();
   });
   it("includes confirmed membership only, never pending requests or mock activities", () => {
     const match = {
