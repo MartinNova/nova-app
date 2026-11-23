@@ -3,6 +3,8 @@
  * All dates are local Lisbon dates "YYYY-MM-DD", all times local "HH:MM".
  */
 
+import type { LabelColor } from "@/types/todo";
+
 export type EventCategory = "lecture" | "exam" | "deadline" | "holiday";
 
 export const EVENT_CATEGORIES: Record<EventCategory, string> = {
@@ -21,6 +23,9 @@ export interface Term {
   end: string;
 }
 
+/** Same colour palette as the to-do labels. */
+export type CourseColor = LabelColor;
+
 /** A weekly lecture the user entered manually. Repeats every week of its term. */
 export interface Lecture {
   id: string;
@@ -35,12 +40,14 @@ export interface Lecture {
   moodleUrl?: string;
   /** Free-text notes for this course (reading list, professor, grading…). */
   notes?: string;
+  /** Own colour of this course. Only shown when "Colour lectures by course" is on; missing = automatic. */
+  color?: CourseColor;
 }
 
 export type NewLecture = Omit<Lecture, "id">;
 
 /** Fields of a lecture that can be edited later in its detail sheet. */
-export type LecturePatch = Partial<Pick<Lecture, "moodleUrl" | "notes" | "location">>;
+export type LecturePatch = Partial<Pick<Lecture, "moodleUrl" | "notes" | "location" | "color">>;
 
 /** One entry in the timetable (lecture occurrence, exam, deadline or holiday). */
 export interface TimetableEvent {
