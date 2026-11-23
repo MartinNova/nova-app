@@ -1,7 +1,9 @@
+import { FileCheck } from "lucide-react";
 import type { Metadata } from "next";
 import { Badge } from "@/components/ui/Badge";
 import { HubHero } from "@/components/ui/HubHero";
 import { TILE_COLORS, Tile } from "@/components/ui/Tile";
+import { NETPA_DOCUMENTS_URL } from "@/data/netpa";
 import { STUDY_MODULES } from "@/lib/config/navigation";
 
 export const metadata: Metadata = { title: "Study Hub" };
@@ -34,6 +36,14 @@ export default function StudyHubPage() {
             badge={status === "soon" ? <Badge>Soon</Badge> : null}
           />
         ))}
+        <Tile
+          href={NETPA_DOCUMENTS_URL}
+          title="Enrollment certificate"
+          description="Download it in netPA under Documents & Requests."
+          icon={<FileCheck className="size-6" aria-hidden />}
+          color="teal"
+          wide
+        />
       </div>
     </>
   );
