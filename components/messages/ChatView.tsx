@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useCurrentUser } from "@/components/providers/CurrentUserProvider";
 import { usePresence } from "@/components/providers/PresenceProvider";
@@ -10,15 +10,23 @@ import { Card } from "@/components/ui/Card";
 import { messagePreview } from "@/lib/messages/messages";
 import { withReaction } from "@/lib/messages/reactions";
 import { directChatKey, isTypingToMe } from "@/lib/presence/presence";
+import { toListingRef } from "@/lib/rooms/rooms";
 import { messageService } from "@/lib/services/message.service";
-import type { Attachment, Message } from "@/types/messages";
+import { roomService } from "@/lib/services/rooms.service";
+import type { Attachment, ListingRef, Message } from "@/types/messages";
 import { Composer } from "./Composer";
 import { MessageList } from "./MessageList";
 import { TypingIndicator } from "./TypingIndicator";
 
-/** One chat with another student (?u=username), live. */
+/**
+ * One chat with another student (?u=username), live. Coming from "Message" on a room listing
+ * (&listing=<id>), the first message carries that listing as a card.
+ */
 export function ChatView() {
-  const username = useSearchParams().get("u") ?? "";
+  const params = useSearchParams();
+  const router = useRouter();
+  const username = params.get("u") ?? "";
+  const listingId = params.get("listing");
   const { user, users, ready } = useCurrentUser();
   const { presence, setTyping } = usePresence();
   const other = users.find((u) => u.username === username.toLowerCase());
@@ -28,6 +36,7 @@ export function ChatView() {
   const [thread, setThread] = useState<{ key: string; messages: Message[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [replyTo, setReplyTo] = useState<Message | null>(null);
+  const [aboutListing, setAboutListing] = useState<ListingRef | null>(null);
   const knownUsernames = new Set(users.map((u) => u.username).filter((u): u is string => !!u));
   const key = `${userId}:${otherId}`;
 
@@ -47,6 +56,25 @@ export function ChatView() {
   }, [userId, otherId]);
 
   useEffect(reload, [reload]);
+
+  // The listing you came from, shown above the field until you send (or remove it).
+  useEffect(() => {
+    if (!listingId || !userId) return;
+    let cancelled = false;
+    roomService
+      .getListing(listingId)
+      .then((listing) => !cancelled && setAboutListing(listing ? toListingRef(listing) : null))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [listingId, userId]);
+
+  /** Forget the listing: it was sent, or you removed it. Also drops it from the address. */
+  function clearListing() {
+    setAboutListing(null);
+    if (listingId) router.replace(`/friends/chat?u=${encodeURIComponent(username)}`);
+  }
   useEffect(() => (userId ? messageService.onChange(userId, reload) : undefined), [userId, reload]);
 
   const messages = thread?.key === key ? thread.messages : null;
@@ -55,8 +83,12 @@ export function ChatView() {
 
   async function send(body: string, attachment?: Attachment) {
     if (!userId || !otherId) return;
-    await messageService.send(userId, otherId, body, attachment, { replyToId: replyTo?.id });
+    await messageService.send(userId, otherId, body, attachment, {
+      replyToId: replyTo?.id,
+      listing: aboutListing,
+    });
     setReplyTo(null);
+    if (aboutListing) clearListing();
     reload();
   }
 
@@ -182,6 +214,8 @@ export function ChatView() {
           }
         }
         onCancelReply={() => setReplyTo(null)}
+        listing={aboutListing}
+        onCancelListing={clearListing}
         onTyping={(on) => setTyping(on && otherId ? directChatKey(otherId) : null)}
       />
     </div>

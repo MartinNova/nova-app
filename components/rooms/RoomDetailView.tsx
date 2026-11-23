@@ -190,7 +190,7 @@ export function RoomDetailView() {
             </div>
             {poster.username && (
               <Link
-                href={`/friends/chat?u=${poster.username}`}
+                href={`/friends/chat?u=${poster.username}&listing=${encodeURIComponent(listing.id)}`}
                 className="bg-brand text-brand-foreground inline-flex h-10 shrink-0 items-center rounded-xl px-4 text-sm font-medium hover:opacity-90"
               >
                 Message

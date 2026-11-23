@@ -7,9 +7,10 @@ import { Avatar } from "@/components/ui/Avatar";
 import { useToast } from "@/components/ui/Toast";
 import { formatMessageTime, messagePreview } from "@/lib/messages/messages";
 import { myReaction, nextReaction, summarizeReactions } from "@/lib/messages/reactions";
-import type { MessageFile, Reaction } from "@/types/messages";
+import type { ListingRef, MessageFile, Reaction } from "@/types/messages";
 import type { User } from "@/types/user";
 import { FileCard } from "./FileCard";
+import { ListingCard } from "./ListingCard";
 import { ForwardSheet } from "./ForwardSheet";
 import { MessageActions } from "./MessageActions";
 import { MessageText } from "./MessageText";
@@ -25,6 +26,8 @@ export interface ChatItem {
   createdAt: string;
   replyToId: string | null;
   forwarded: boolean;
+  /** Direct messages sent from a room listing show it as a card. */
+  listing?: ListingRef | null;
   reactions: Reaction[];
 }
 
@@ -178,7 +181,10 @@ export function MessageList({
           mine
             ? `bg-brand text-brand-foreground justify-self-end ${tail ? "rounded-br-md" : ""}`
             : `bg-surface justify-self-start ${tail ? "rounded-bl-md" : ""}`
-        } ${attachment ? "p-1" : "px-3.5 py-2"} ${flashId === m.id ? "ring-brand/40 ring-4" : ""}`}
+        } ${attachment ? "p-1" : "px-3.5 py-2"} ${flashId === m.id ? "ring-brand/40 ring-4" : ""} ${
+          // Room for the listing's title even when the text is just "Hi".
+          m.listing ? "min-w-[75%]" : ""
+        }`}
       >
         {m.forwarded && (
           <span
@@ -188,6 +194,11 @@ export function MessageList({
           >
             <Forward className="size-3.5" aria-hidden />
             Forwarded
+          </span>
+        )}
+        {m.listing && (
+          <span className={attachment ? "px-1 pt-1" : ""}>
+            <ListingCard listing={m.listing} mine={mine} interactive={interactive} />
           </span>
         )}
         {original && (

@@ -1,3 +1,4 @@
+import type { ListingRef } from "@/types/messages";
 import {
   MAX_LISTING_AREAS,
   OTHER_AREA,
@@ -173,4 +174,14 @@ export function formatAvailability(
   const from = listing.availableFrom <= today ? "now" : formatDate(listing.availableFrom);
   if (!listing.availableUntil) return from === "now" ? "From now" : `From ${from}`;
   return `${from === "now" ? "Now" : from} – ${formatDate(listing.availableUntil)}`;
+}
+
+/** What a chat message shows about a listing ("Message" on the listing page). */
+export function toListingRef(listing: RoomListing): ListingRef {
+  return {
+    id: listing.id,
+    title: listing.title,
+    subtitle: `${formatRent(listing)} · ${formatAreas(listing.areas)}`,
+    photo: listing.photos[0] ?? null,
+  };
 }

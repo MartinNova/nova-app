@@ -1,4 +1,9 @@
-import { MAX_MESSAGE_LENGTH, type Conversation, type Message } from "@/types/messages";
+import {
+  MAX_MESSAGE_LENGTH,
+  type Conversation,
+  type ListingRef,
+  type Message,
+} from "@/types/messages";
 
 /** Returns an error message, or null if the message can be sent. An attachment needs no text. */
 export function validateMessage(body: string, hasAttachment = false): string | null {
@@ -55,3 +60,21 @@ export function formatMessageTime(iso: string, now: Date): string {
     return date.toLocaleDateString("en-GB", { weekday: "short" });
   return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
+
+/** A message's listing, from the database or this browser; anything malformed becomes null. */
+export function parseListingRef(value: unknown): ListingRef | null {
+  if (!value || typeof value !== "object") return null;
+  const v = value as Record<string, unknown>;
+  if (typeof v.id !== "string" || !/^[\w-]{1,64}$/.test(v.id)) return null;
+  if (typeof v.title !== "string" || !v.title.trim()) return null;
+  return {
+    id: v.id,
+    title: v.title.slice(0, 80),
+    subtitle: typeof v.subtitle === "string" ? v.subtitle.slice(0, 120) : "",
+    photo: typeof v.photo === "string" && /^(https:|data:image\/)/.test(v.photo) ? v.photo : null,
+  };
+}
+
+/** Link to the listing a message is about. */
+export const listingHref = (ref: Pick<ListingRef, "id">) =>
+  `/campus/rooms/listing?id=${encodeURIComponent(ref.id)}`;

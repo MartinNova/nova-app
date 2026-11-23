@@ -20,7 +20,8 @@ import {
 import { TYPING_IDLE_MS } from "@/lib/presence/presence";
 import { resizePhoto } from "@/lib/rooms/photos";
 import { AUTH_MODE } from "@/lib/supabase/config";
-import { MAX_MESSAGE_LENGTH, type Attachment } from "@/types/messages";
+import { MAX_MESSAGE_LENGTH, type Attachment, type ListingRef } from "@/types/messages";
+import { ListingThumb } from "./ListingCard";
 
 /** Demo mode keeps attachments in the browser's small storage, so they are kept smaller there. */
 const MAX_IMAGE_SIDE = AUTH_MODE === "accounts" ? 1600 : 1024;
@@ -38,6 +39,9 @@ interface ComposerProps {
   /** The message you're answering (shown above the field), like WhatsApp's reply. */
   replyTo?: { name: string; preview: string } | null;
   onCancelReply?: () => void;
+  /** The room listing the next message is about (coming from "Message" on a listing). */
+  listing?: ListingRef | null;
+  onCancelListing?: () => void;
 }
 
 /** The attach menu, like WhatsApp: photo library, camera, or a document. */
@@ -51,7 +55,15 @@ const ATTACH_OPTIONS = [
  * Message field with one paperclip (photos, camera, document), fixed to the bottom of the screen
  * (pages using it hide the tab bar, like WhatsApp and iMessage do in a chat).
  */
-export function Composer({ placeholder, onSend, onTyping, replyTo, onCancelReply }: ComposerProps) {
+export function Composer({
+  placeholder,
+  onSend,
+  onTyping,
+  replyTo,
+  onCancelReply,
+  listing,
+  onCancelListing,
+}: ComposerProps) {
   const [draft, setDraft] = useState("");
   const [pending, setPending] = useState<Pending | null>(null);
   const [sending, setSending] = useState(false);
@@ -173,6 +185,24 @@ export function Composer({ placeholder, onSend, onTyping, replyTo, onCancelReply
           <p role="alert" className="text-sm text-red-700 dark:text-red-400">
             {error}
           </p>
+        )}
+        {listing && (
+          <div className="bg-surface border-brand fade-in flex items-center gap-2.5 rounded-xl border-l-4 py-1.5 pr-1.5 pl-1.5">
+            <ListingThumb listing={listing} />
+            <span className="min-w-0 flex-1">
+              <span className="text-brand block text-[13px] font-semibold">About this room</span>
+              <span className="block truncate text-[13px] font-medium">{listing.title}</span>
+              <span className="text-muted block truncate text-[13px]">{listing.subtitle}</span>
+            </span>
+            <button
+              type="button"
+              onClick={onCancelListing}
+              aria-label="Don't attach the listing"
+              className="text-muted hover:bg-border/60 flex size-8 shrink-0 items-center justify-center rounded-full"
+            >
+              <X className="size-4" aria-hidden />
+            </button>
+          </div>
         )}
         {replyTo && (
           <div className="bg-surface border-brand fade-in flex items-center gap-2 rounded-xl border-l-4 py-1.5 pr-1.5 pl-3">
