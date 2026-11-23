@@ -33,6 +33,36 @@ export function validateStudentId(studentId: string): string | null {
   return /^\d{4,10}$/.test(studentId) ? null : "Student ID: numbers only, e.g. 12345.";
 }
 
+/**
+ * Tidies a typed mobile number: "0049 (151) 234-567" -> "+49 151 234 567".
+ * Keeps digits, a leading + and single spaces; "00" at the start becomes "+".
+ */
+export function normalizePhone(input: string): string {
+  const cleaned = input
+    .trim()
+    .replace(/[()\-./]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const international = cleaned.startsWith("00") ? `+${cleaned.slice(2)}` : cleaned;
+  return international.replace(/^\+\s+/, "+");
+}
+
+/** Error message, or null if the (normalized) number is fine. Empty is fine: it's optional. */
+export function validatePhone(phone: string): string | null {
+  if (!phone) return null;
+  if (!/^\+?\d[\d ]*$/.test(phone))
+    return "Mobile number: digits only, optionally starting with +, e.g. +351 912 345 678.";
+  const digits = phone.replace(/\D/g, "").length;
+  if (digits < 6) return "Mobile number: that looks too short.";
+  if (digits > 15) return "Mobile number: that looks too long.";
+  return null;
+}
+
+/** Link that starts a call: "+351 912 345 678" -> "tel:+351912345678". */
+export function phoneHref(phone: string): string {
+  return `tel:${phone.replace(/[^\d+]/g, "")}`;
+}
+
 export function validateProfileUpdate(update: ProfileUpdate): string | null {
   const usernameError = validateUsername(update.username);
   if (usernameError) return `Username: ${usernameError}`;
@@ -47,6 +77,8 @@ export function validateProfileUpdate(update: ProfileUpdate): string | null {
     return "LinkedIn: paste the full link, e.g. https://www.linkedin.com/in/your-name";
   if (update.instagram && !/^[A-Za-z0-9_.]{1,30}$/.test(update.instagram))
     return "Instagram: only your handle, without @.";
+  const phoneError = validatePhone(update.phone);
+  if (phoneError) return phoneError;
   return null;
 }
 

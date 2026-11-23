@@ -92,6 +92,11 @@ export interface Profile {
   instagram: string;
   /** Full LinkedIn profile URL. */
   linkedin: string;
+  /**
+   * Optional mobile number, e.g. "+351 912 345 678", or "". Saved cleaned up (normalizePhone).
+   * Visible to signed-in students who can see your profile; never to logged-out visitors.
+   */
+  phone: string;
 
   /** Nova programme from NOVA_PROGRAMS, or "". */
   program: string;

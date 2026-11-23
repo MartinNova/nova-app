@@ -9,7 +9,13 @@ import { normalizeUsername } from "@/lib/profile/profile-rules";
 import { profileService } from "@/lib/services/profile.service";
 import type { Profile, ProfileUpdate } from "@/types/profile";
 import { AccountSection } from "./AccountSection";
-import { AboutSection, InterestsSection, PrivacySection, StudySection } from "./ProfileSections";
+import {
+  AboutSection,
+  ContactSection,
+  InterestsSection,
+  PrivacySection,
+  StudySection,
+} from "./ProfileSections";
 
 /** Editable copy of the profile (everything except e-mail). */
 function toUpdate(profile: Profile): ProfileUpdate {
@@ -51,6 +57,7 @@ function SettingsForm({ profile, onSaved }: { profile: Profile; onSaved: () => P
     <div className="grid gap-4">
       <form onSubmit={handleSubmit} className="grid gap-4">
         <AboutSection form={form} set={set} userId={profile.userId} />
+        <ContactSection form={form} set={set} />
         <StudySection form={form} set={set} />
         <InterestsSection form={form} set={set} />
         <PrivacySection form={form} set={set} />

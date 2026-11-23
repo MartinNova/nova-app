@@ -5,9 +5,12 @@ import {
   flagEmoji,
   formatMonth,
   initials,
+  normalizePhone,
   normalizeUsername,
+  phoneHref,
   studyProgress,
   validatePassword,
+  validatePhone,
   validateProfileUpdate,
   validateStudentId,
   validateUsername,
@@ -24,6 +27,7 @@ const update = (overrides: Partial<ProfileUpdate> = {}): ProfileUpdate => ({
   languages: [],
   instagram: "",
   linkedin: "",
+  phone: "",
   program: "",
   studyStart: "",
   studyEnd: "",
@@ -104,5 +108,39 @@ describe("validateStudentId", () => {
     expect(validateStudentId("123")).toMatch(/numbers only/);
     expect(validateStudentId("12345678901")).toMatch(/numbers only/);
     expect(validateProfileUpdate(update({ studentId: "abc" }))).toMatch(/Student ID/);
+  });
+});
+
+describe("phone number", () => {
+  it("tidies what people type", () => {
+    expect(normalizePhone("  +351 912-345-678 ")).toBe("+351 912 345 678");
+    expect(normalizePhone("0049 (151) 234/567")).toBe("+49 151 234 567");
+    expect(normalizePhone("+ 351 912345678")).toBe("+351 912345678");
+    expect(normalizePhone("912.345.678")).toBe("912 345 678");
+    expect(normalizePhone("   ")).toBe("");
+  });
+
+  it("is optional, so empty is fine", () => {
+    expect(validatePhone("")).toBeNull();
+    expect(validateProfileUpdate(update({ phone: "" }))).toBeNull();
+  });
+
+  it("accepts local and international numbers", () => {
+    expect(validatePhone("+351 912 345 678")).toBeNull();
+    expect(validatePhone("912345678")).toBeNull();
+    expect(validatePhone("+49 151 23456789")).toBeNull();
+  });
+
+  it("rejects letters, misplaced + and wrong lengths", () => {
+    expect(validatePhone("call me")).toMatch(/digits only/);
+    expect(validatePhone("+351 91a 345")).toMatch(/digits only/);
+    expect(validatePhone("351+912")).toMatch(/digits only/);
+    expect(validatePhone("+12 34")).toMatch(/too short/);
+    expect(validatePhone("+1234567890123456")).toMatch(/too long/);
+    expect(validateProfileUpdate(update({ phone: "abc" }))).toMatch(/Mobile number/);
+  });
+
+  it("builds a tel: link without spaces", () => {
+    expect(phoneHref("+351 912 345 678")).toBe("tel:+351912345678");
   });
 });
