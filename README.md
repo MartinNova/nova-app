@@ -8,14 +8,14 @@ Group project for **Introduction to Programming** (NOVA Master, S1).
 Live at **https://nova-app-orcin-tau.vercel.app** (scan `docs/nova-app-qr.png`). Sign in with
 e-mail and password, or look around without an account.
 
-| Module    | What you can do                                                                                                                                                         |
-| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Home      | Your day: next lecture, surf in Carcavelos, food, padel and to-dos at a glance                                                                                          |
-| Sport     | **Padel**: post a booked court, ask to join, organiser accepts or declines (live). **Running**: clubs and runs. **Surf**: forecast and schools. **Gym**, **Yoga**       |
-| Study Hub | **Timetable** (weekly lectures, `.ics` import, holidays), **To-dos** (lists, board), **Payment deadlines** (tuition dates from netPA with calendar reminders)           |
-| Friends   | Find Nova students by programme and sport, view profiles, **direct messages** with unread count                                                                         |
-| Campus    | **Getting to campus** (next CP trains from Carcavelos/Oeiras, your train after class, Uber, map), **Rooms & flats** (listings with photos), Food Options, library links |
-| Account   | Profile with picture, programme and links; settings; change e-mail/password; delete account                                                                             |
+| Module    | What you can do                                                                                                                                                                                                                                                                                                                                            |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Home      | **Your Week** (lectures, deadlines, to-dos, padel and runs of this week) and swipeable widgets: next lecture, surf in Carcavelos, padel, to-dos                                                                                                                                                                                                            |
+| Sport     | **Padel**: post a booked court, ask to join, organiser accepts or declines (live). **Running**: clubs and runs. **Surf**: forecast (weather API) and schools. **Gym**, **Yoga**                                                                                                                                                                            |
+| Study Hub | **Timetable**: weekly lectures, `.ics` import of exams and Moodle deadlines, holidays; tap a lecture to change name, day, time, room, Moodle link and notes. **To-dos**: lists, board, labels. **Payment deadlines**: import your own netPA statement (Excel/CSV), countdown, calendar reminders, what you already paid. **New at Nova**: apps and clubs   |
+| Friends   | **Friend requests** (send, accept, decline), search all students. **Chats and groups** live: online dot, "typing…", photos and files, long-press to react, reply, forward, copy or delete, swipe to reply, **search across all chats**. **Group info**: description, admins, add people, media, links and docs                                             |
+| Campus    | **Getting to campus** (next CP trains from Carcavelos/Oeiras, your train after class, Uber, map). **Rooms & flats**: listings with photo gallery, several areas (or your own under "Other"), filters (price range, type, bills, photos, move-in) and sorting, edit your listing, message the poster with the listing attached. Food Options, library links |
+| Account   | Profile with picture, programme, links, optional phone and when you're usually free; choose who sees each detail (**Everyone / Friends / Only me**); change e-mail/password; delete account                                                                                                                                                                |
 
 How it is built and why: **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**.
 
@@ -106,7 +106,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for which files belong to which module.
 
 ## Roadmap
 
-Done: sport, study hub, friends with chat, campus, accounts, deployment. Next steps and known
+Done: sport, study hub, friends with requests, chats and groups, campus, accounts, deployment. Next steps and known
 limits are listed in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#5-limits-honest-list).
 
 ## Team
