@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageCircle, Users } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { GroupAvatar } from "@/components/groups/GroupAvatar";
 import { useMyGroups } from "@/components/groups/useMyGroups";
@@ -106,21 +106,12 @@ export function InboxView() {
     }),
   );
 
-  const rows = [...direct, ...grouped].sort((a, b) => b.time.localeCompare(a.time));
+  // Newest message on top. Compared as dates: the database and the demo write times differently.
+  const rows = [...direct, ...grouped].sort((a, b) => Date.parse(b.time) - Date.parse(a.time));
   const now = new Date();
 
   return (
     <div className="flex flex-col gap-4">
-      <Link
-        href="/friends/groups/new"
-        className="bg-surface focus-visible:outline-brand active:bg-brand/5 flex items-center gap-3 rounded-3xl p-3 transition focus-visible:outline-2 active:scale-[0.98]"
-      >
-        <span className="bg-brand text-brand-foreground flex size-10 items-center justify-center rounded-full">
-          <Users className="size-5" aria-hidden />
-        </span>
-        <span className="text-brand text-[17px] font-semibold">New group</span>
-      </Link>
-
       {rows.length === 0 ? (
         <Card className="flex flex-col items-center gap-3 py-10 text-center">
           <span className="bg-brand text-brand-foreground flex size-14 items-center justify-center rounded-2xl">
