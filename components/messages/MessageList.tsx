@@ -2,7 +2,7 @@
 
 import { Forward, Reply, X } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Avatar } from "@/components/ui/Avatar";
 import { useToast } from "@/components/ui/Toast";
 import { formatMessageTime, messagePreview } from "@/lib/messages/messages";
@@ -65,6 +65,8 @@ interface MessageListProps {
   onDelete: (item: ChatItem) => void;
   /** Shown after the last message, e.g. "Seen". */
   footer?: React.ReactNode;
+  /** Opened from search: scroll to this message and light it up once. */
+  focusId?: string | null;
 }
 
 /**
@@ -83,6 +85,7 @@ export function MessageList({
   onReply,
   onDelete,
   footer,
+  focusId,
 }: MessageListProps) {
   const [viewing, setViewing] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -106,6 +109,24 @@ export function MessageList({
   useEffect(() => {
     window.scrollTo({ top: document.documentElement.scrollHeight });
   }, [count]);
+
+  // Coming from search: after the jump to the bottom, go to the found message and flash it.
+  const focusLoaded = focusId ? byId.has(focusId) : false;
+  const focused = useRef<string | null>(null);
+  useEffect(() => {
+    if (!focusId || !focusLoaded || focused.current === focusId) return;
+    // Marked as done inside the timer: in development React runs effects twice and the first
+    // timer gets cancelled, so marking it here would skip the jump.
+    const timer = setTimeout(() => {
+      focused.current = focusId;
+      document
+        .getElementById(`message-${focusId}`)
+        ?.scrollIntoView({ block: "center", behavior: "smooth" });
+      setFlashId(focusId);
+      setTimeout(() => setFlashId((current) => (current === focusId ? null : current)), 1800);
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [focusId, focusLoaded]);
 
   // Escape closes the full-screen picture.
   useEffect(() => {

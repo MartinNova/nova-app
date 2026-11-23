@@ -27,6 +27,7 @@ export function ChatView() {
   const router = useRouter();
   const username = params.get("u") ?? "";
   const listingId = params.get("listing");
+  const focusId = params.get("m");
   const { user, users, ready } = useCurrentUser();
   const { presence, setTyping } = usePresence();
   const other = users.find((u) => u.username === username.toLowerCase());
@@ -189,6 +190,7 @@ export function ChatView() {
           onReact={react}
           onReply={(item) => setReplyTo(messages.find((m) => m.id === item.id) ?? null)}
           onDelete={remove}
+          focusId={focusId}
           footer={
             messages.at(-1)?.senderId === user.id &&
             messages.at(-1)?.readAt && <li className="text-muted justify-self-end text-xs">Seen</li>
