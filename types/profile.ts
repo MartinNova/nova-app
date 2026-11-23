@@ -59,7 +59,17 @@ export const LANGUAGES = [
 ] as const;
 
 export const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
+export type Weekday = (typeof WEEKDAYS)[number];
+/** Old free-time chips; only used to convert profiles saved before AvailabilitySlot existed. */
 export const DAY_TIMES = ["Morning", "Afternoon", "Evening"] as const;
+
+/** One free time window on one weekday, 24-hour "HH:MM", `from` before `to`. */
+export interface AvailabilitySlot {
+  day: Weekday;
+  from: string;
+  to: string;
+}
+export const MAX_SLOTS_PER_DAY = 3;
 
 export const VISIBILITIES = {
   everyone: "All students on the app",
@@ -133,8 +143,8 @@ export interface Profile {
   sports: string[];
   /** Lower bound of a padel level band (see types/padel.ts), or null. */
   padelLevel: number | null;
-  availabilityDays: string[];
-  availabilityTimes: string[];
+  /** When you're usually free, per weekday (sorted, no overlaps; see lib/profile/availability). */
+  availability: AvailabilitySlot[];
 
   visibility: Visibility;
   showInSuggestions: boolean;

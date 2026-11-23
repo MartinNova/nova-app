@@ -1,3 +1,4 @@
+import { normalizeSlots, slotsFromLegacy } from "@/lib/profile/availability";
 import { resolveFieldVisibility } from "@/lib/profile/privacy";
 import type { Profile, ProfileUpdate, StudyStatus, Visibility } from "@/types/profile";
 import type { User } from "@/types/user";
@@ -23,8 +24,11 @@ export interface ProfileRow {
   study_status: string;
   sports: string[];
   padel_level: number | null;
+  /** Old free-time chips, replaced by availability_slots (kept for older app versions). */
   availability_days: string[];
   availability_times: string[];
+  /** [{ day: "Mon", from: "09:00", to: "12:00" }, ...] */
+  availability_slots?: unknown;
   visibility: string;
   show_in_suggestions: boolean;
   /** Only filled for your own row; null for other students (see profile_cards). */
@@ -42,7 +46,8 @@ export const PROFILES_VIEW = "profile_cards";
 export const PROFILE_COLUMNS =
   "id, student_id, username, first_name, last_name, avatar_url, bio, country, languages, " +
   "instagram, linkedin, phone, program, study_start, study_end, study_status, sports, padel_level, " +
-  "availability_days, availability_times, visibility, show_in_suggestions, field_visibility";
+  "availability_days, availability_times, availability_slots, visibility, show_in_suggestions, " +
+  "field_visibility";
 
 /** Enough for names and avatars in lists (padel players, running clubs, ...). */
 export const USER_COLUMNS = "id, username, first_name, last_name, avatar_url";
@@ -70,8 +75,11 @@ export function rowToProfile(row: ProfileRow, email = ""): Profile {
     sports: row.sports ?? [],
     // Postgres numeric can arrive as a string.
     padelLevel: row.padel_level === null ? null : Number(row.padel_level),
-    availabilityDays: row.availability_days ?? [],
-    availabilityTimes: row.availability_times ?? [],
+    // Before the migration ran, only the old chips exist.
+    availability:
+      row.availability_slots === undefined
+        ? slotsFromLegacy(row.availability_days ?? [], row.availability_times ?? [])
+        : normalizeSlots(row.availability_slots),
     visibility: row.visibility as Visibility,
     showInSuggestions: row.show_in_suggestions,
     fieldVisibility: resolveFieldVisibility(row.field_visibility),
@@ -117,8 +125,7 @@ export function updateToRow(update: ProfileUpdate) {
     study_status: update.studyStatus,
     sports: update.sports,
     padel_level: update.padelLevel,
-    availability_days: update.availabilityDays,
-    availability_times: update.availabilityTimes,
+    availability_slots: normalizeSlots(update.availability),
     visibility: update.visibility,
     show_in_suggestions: update.showInSuggestions,
     field_visibility: update.fieldVisibility,

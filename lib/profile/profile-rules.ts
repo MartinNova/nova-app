@@ -1,6 +1,7 @@
 /**
  * Pure profile helpers (no storage, no browser APIs), unit tested.
  */
+import { validateAvailability } from "@/lib/profile/availability";
 import { BIO_MAX_LENGTH, type ProfileUpdate } from "@/types/profile";
 
 export const USERNAME_PATTERN = /^[a-z0-9_.]{3,20}$/;
@@ -79,6 +80,8 @@ export function validateProfileUpdate(update: ProfileUpdate): string | null {
     return "Instagram: only your handle, without @.";
   const phoneError = validatePhone(update.phone);
   if (phoneError) return phoneError;
+  const availabilityError = validateAvailability(update.availability);
+  if (availabilityError) return `Usually free: ${availabilityError}`;
   return null;
 }
 
