@@ -46,6 +46,28 @@ const localRoomService: RoomService = {
     writeJSON(LISTINGS_KEY, [listing, ...load()]);
     return listing;
   },
+  async updateListing(id, input, photos, userId) {
+    const listings = load();
+    const old = listings.find((l) => l.id === id);
+    if (!old) throw new Error("Listing not found.");
+    if (old.createdBy !== userId) throw new Error("Only the person who posted it can edit it.");
+    const error = validateNewListing({ ...input, kind: old.kind }, toISODate(new Date()));
+    if (error) throw new Error(error);
+    const added = await Promise.all(photos.added.map(toDataUrl));
+    const updated: RoomListing = {
+      ...old,
+      ...input,
+      kind: old.kind,
+      title: input.title.trim(),
+      description: input.description.trim(),
+      photos: [...photos.kept, ...added].slice(0, MAX_ROOM_PHOTOS),
+    };
+    writeJSON(
+      LISTINGS_KEY,
+      listings.map((l) => (l.id === id ? updated : l)),
+    );
+    return updated;
+  },
   async deleteListing(id, userId) {
     const listings = load();
     const listing = listings.find((l) => l.id === id);
@@ -157,6 +179,58 @@ const supabaseRoomService: RoomService = {
       await bucket.remove(urls.map((_, i) => `${userId}/${id}/${i + 1}.jpg`));
       fail(error);
     }
+    return rowToListing(data as ListingRow);
+  },
+  async updateListing(id, input, photos, userId) {
+    const old = await this.getListing(id);
+    if (!old) throw new Error("Listing not found.");
+    if (old.createdBy !== userId) throw new Error("Only the person who posted it can edit it.");
+    const problem = validateNewListing({ ...input, kind: old.kind }, toISODate(new Date()));
+    if (problem) throw new Error(problem);
+
+    // New photos get their own names, so they never overwrite one that is still in use.
+    const bucket = getSupabase().storage.from(PHOTO_BUCKET);
+    const room = MAX_ROOM_PHOTOS - photos.kept.length;
+    const uploaded: string[] = [];
+    for (const photo of photos.added.slice(0, Math.max(0, room))) {
+      const path = `${userId}/${id}/${crypto.randomUUID()}.jpg`;
+      const { error } = await bucket.upload(path, photo, { contentType: "image/jpeg" });
+      if (error) {
+        if (uploaded.length) await bucket.remove(uploaded);
+        throw new Error("Could not upload a photo. Please try smaller images.");
+      }
+      uploaded.push(path);
+    }
+    const urls = [...photos.kept, ...uploaded.map((p) => bucket.getPublicUrl(p).data.publicUrl)];
+
+    const { data, error } = await getSupabase()
+      .from("room_listings")
+      .update({
+        title: input.title.trim(),
+        room_type: input.roomType,
+        area: input.area,
+        rent: input.rent,
+        bills_included: input.billsIncluded,
+        available_from: input.availableFrom,
+        available_until: input.availableUntil || null,
+        description: input.description.trim(),
+        photos: urls,
+      })
+      .eq("id", id)
+      .eq("created_by", userId)
+      .select("*")
+      .single();
+    if (error) {
+      if (uploaded.length) await bucket.remove(uploaded);
+      fail(error);
+    }
+
+    // Photos you removed: delete their files too (only wasted space if this fails).
+    const { data: files } = await bucket.list(`${userId}/${id}`);
+    const unused = (files ?? [])
+      .map((file) => `${userId}/${id}/${file.name}`)
+      .filter((path) => !urls.includes(bucket.getPublicUrl(path).data.publicUrl));
+    if (unused.length) await bucket.remove(unused);
     return rowToListing(data as ListingRow);
   },
   async deleteListing(id, userId) {

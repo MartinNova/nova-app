@@ -32,6 +32,10 @@ The header shows **Sign in** when signed out, otherwise the settings gear and yo
    13. `20261122000000_message_actions.sql` (long-press on a message: reactions, reply, forward, delete)
    14. `20261123000000_profile_phone.sql` (optional mobile number, visible to signed-in students who can see your profile)
    15. `20261124000000_friendships.sql` (friend requests: send, accept or decline, unfriend; live updates)
+   16. `20261125000000_personal_data.sql` (to-dos and timetable saved per account, on every device)
+   17. `20261126000000_field_privacy.sql` (who sees which profile detail: Everyone, Friends or Only me)
+   18. `20261127000000_availability_slots.sql` ("Usually free" with real times per weekday)
+   19. `20261128000000_room_listing_edit.sql` (edit your room listing after posting it)
 3. **Authentication → Sign In / Providers → Email**: enabled (default).
    - For a live demo, turn **Confirm email** off: Supabase's built-in mail server only
      sends a few e-mails per hour. With it on, new users must click a link first.

@@ -59,9 +59,15 @@ export function filterListings(
   return listings
     .filter((l) => l.kind === filter.kind)
     .filter((l) => !l.availableUntil || l.availableUntil >= today)
-    .filter((l) => !filter.area || l.area === filter.area)
+    .filter((l) => !filter.areas?.length || filter.areas.includes(l.area))
     .filter((l) => filter.maxRent === undefined || l.rent <= filter.maxRent)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+/** Label of the area filter: "All areas", "Cascais", "Cascais +2". */
+export function areasLabel(areas: string[]): string {
+  if (areas.length === 0) return "All areas";
+  return areas.length === 1 ? areas[0] : `${areas[0]} +${areas.length - 1}`;
 }
 
 /** "550 €/month · bills incl." or "up to 600 €/month" for "wanted". */

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createMockListings } from "@/data/rooms.mock";
 import type { ListingKind, NewRoomListing, RoomListing } from "@/types/rooms";
 import {
+  areasLabel,
   filterListings,
   formatAvailability,
   formatRent,
@@ -86,10 +87,25 @@ describe("filterListings", () => {
   });
 
   it("filters by area and budget", () => {
-    expect(filterListings(all, { kind: "offer", area: "Cascais" }, TODAY)).toHaveLength(1);
+    expect(filterListings(all, { kind: "offer", areas: ["Cascais"] }, TODAY)).toHaveLength(1);
+    expect(filterListings(all, { kind: "offer", areas: [] }, TODAY)).toHaveLength(2);
     expect(filterListings(all, { kind: "offer", maxRent: 600 }, TODAY).map((l) => l.id)).toEqual([
       "2",
     ]);
+  });
+
+  it("shows listings in any of several areas", () => {
+    const more = [...all, listing("5", { area: "Oeiras" }), listing("6", { area: "Estoril" })];
+    const ids = filterListings(more, { kind: "offer", areas: ["Cascais", "Oeiras"] }, TODAY).map(
+      (l) => l.id,
+    );
+    expect(ids.sort()).toEqual(["1", "5"]);
+  });
+
+  it("labels the area filter", () => {
+    expect(areasLabel([])).toBe("All areas");
+    expect(areasLabel(["Cascais"])).toBe("Cascais");
+    expect(areasLabel(["Cascais", "Oeiras", "Estoril"])).toBe("Cascais +2");
   });
 });
 

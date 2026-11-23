@@ -55,9 +55,16 @@ export interface RoomListing {
 
 export type NewRoomListing = Omit<RoomListing, "id" | "photos" | "createdBy" | "createdAt">;
 
+/** Photos when saving the form: the ones you kept (URLs, when editing) and new ones. */
+export interface ListingPhotos {
+  kept: string[];
+  added: Blob[];
+}
+
 export interface RoomFilter {
   kind: ListingKind;
-  area?: string;
+  /** Any of these areas; empty or missing = all areas. */
+  areas?: string[];
   maxRent?: number;
 }
 
@@ -66,6 +73,13 @@ export interface RoomService {
   getListing(id: string): Promise<RoomListing | null>;
   /** `photos` are already resized JPEGs (see lib/rooms/photos.ts). */
   createListing(input: NewRoomListing, photos: Blob[], userId: string): Promise<RoomListing>;
+  /** Changes your own listing. Whether it's an offer or a search stays the same. */
+  updateListing(
+    id: string,
+    input: NewRoomListing,
+    photos: ListingPhotos,
+    userId: string,
+  ): Promise<RoomListing>;
   deleteListing(id: string, userId: string): Promise<void>;
   /** Calls `listener` when listings change on another device. Returns an unsubscribe function. */
   onChange(listener: () => void): () => void;

@@ -11,7 +11,9 @@ import {
   ROOM_AREAS,
   ROOM_TYPES,
   type ListingKind,
+  type ListingPhotos,
   type NewRoomListing,
+  type RoomListing,
   type RoomType,
 } from "@/types/rooms";
 
@@ -19,25 +21,36 @@ interface NewListingFormProps {
   /** Offer or search: follows the "Rooms offered / Looking for a room" tab. */
   kind: ListingKind;
   today: string;
-  onSubmit: (input: NewRoomListing, photos: Blob[]) => Promise<void>;
+  /** Editing: the listing as it is now (fields and photos start filled in). */
+  initial?: RoomListing;
+  onSubmit: (input: NewRoomListing, photos: ListingPhotos) => Promise<void>;
   onClose: () => void;
+}
+
+/** A photo in the form: already uploaded (only a URL) or just picked (a blob to upload). */
+interface FormPhoto {
+  url: string;
+  blob?: Blob;
 }
 
 const fieldClass =
   "border-border bg-surface focus-visible:outline-brand mt-1 h-10 w-full rounded-xl border px-3 text-sm focus-visible:outline-2";
 
-/** Post a free room, or that you are looking for one (depending on the tab). */
-export function NewListingForm({ kind, today, onSubmit, onClose }: NewListingFormProps) {
+/** Post a free room, or that you are looking for one (depending on the tab), or edit yours. */
+export function NewListingForm({ kind, today, initial, onSubmit, onClose }: NewListingFormProps) {
   const copy = listingFormCopy(kind);
-  const [title, setTitle] = useState("");
-  const [roomType, setRoomType] = useState<RoomType>("room");
-  const [area, setArea] = useState<string>(ROOM_AREAS[0]);
-  const [rent, setRent] = useState("");
-  const [billsIncluded, setBillsIncluded] = useState(false);
-  const [availableFrom, setAvailableFrom] = useState(today);
-  const [availableUntil, setAvailableUntil] = useState("");
-  const [description, setDescription] = useState("");
-  const [photos, setPhotos] = useState<{ blob: Blob; url: string }[]>([]);
+  const editing = Boolean(initial);
+  const [title, setTitle] = useState(initial?.title ?? "");
+  const [roomType, setRoomType] = useState<RoomType>(initial?.roomType ?? "room");
+  const [area, setArea] = useState<string>(initial?.area ?? ROOM_AREAS[0]);
+  const [rent, setRent] = useState(initial ? String(initial.rent) : "");
+  const [billsIncluded, setBillsIncluded] = useState(initial?.billsIncluded ?? false);
+  const [availableFrom, setAvailableFrom] = useState(initial?.availableFrom ?? today);
+  const [availableUntil, setAvailableUntil] = useState(initial?.availableUntil ?? "");
+  const [description, setDescription] = useState(initial?.description ?? "");
+  const [photos, setPhotos] = useState<FormPhoto[]>(
+    () => initial?.photos.map((url) => ({ url })) ?? [],
+  );
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -58,7 +71,7 @@ export function NewListingForm({ kind, today, onSubmit, onClose }: NewListingFor
 
   function removePhoto(index: number) {
     setPhotos((current) => {
-      URL.revokeObjectURL(current[index].url);
+      if (current[index].blob) URL.revokeObjectURL(current[index].url);
       return current.filter((_, i) => i !== index);
     });
   }
@@ -80,10 +93,21 @@ export function NewListingForm({ kind, today, onSubmit, onClose }: NewListingFor
           availableUntil,
           description,
         },
-        copy.withPhotos ? photos.map((p) => p.blob) : [],
+        copy.withPhotos
+          ? {
+              kept: photos.filter((p) => !p.blob).map((p) => p.url),
+              added: photos.flatMap((p) => (p.blob ? [p.blob] : [])),
+            }
+          : { kept: [], added: [] },
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not post the listing.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : editing
+            ? "Could not save the changes."
+            : "Could not post the listing.",
+      );
       setSaving(false);
     }
   }
@@ -91,7 +115,7 @@ export function NewListingForm({ kind, today, onSubmit, onClose }: NewListingFor
   return (
     <Card className="mb-4">
       <form onSubmit={handleSubmit} className="grid gap-4">
-        <h2 className="text-base font-semibold">{copy.heading}</h2>
+        <h2 className="text-base font-semibold">{editing ? "Edit listing" : copy.heading}</h2>
 
         <label className="text-sm font-medium">
           Title
@@ -250,7 +274,13 @@ export function NewListingForm({ kind, today, onSubmit, onClose }: NewListingFor
 
         <div className="flex gap-2">
           <Button type="submit" disabled={saving}>
-            {saving ? "Posting…" : "Post listing"}
+            {saving
+              ? editing
+                ? "Saving…"
+                : "Posting…"
+              : editing
+                ? "Save changes"
+                : "Post listing"}
           </Button>
           <Button variant="ghost" onClick={onClose}>
             Cancel
