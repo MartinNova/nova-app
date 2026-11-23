@@ -51,6 +51,49 @@ describe("database rules (supabase/migrations)", () => {
   });
 });
 
+describe("profile privacy (Everyone / Friends / Only me)", () => {
+  const PRIVATE_COLUMNS = [
+    "avatar_url",
+    "bio",
+    "country",
+    "program",
+    "sports",
+    "padel_level",
+    "availability_days",
+    "availability_times",
+    "instagram",
+    "linkedin",
+    "phone",
+  ];
+
+  it("the profiles table no longer hands out the private columns", () => {
+    const columnsOf = (pattern: RegExp) =>
+      [...sql.matchAll(pattern)].map((m) => ({
+        at: m.index,
+        columns: m[1].split(",").map((c) => c.trim()),
+      }));
+    const revokes = columnsOf(/revoke select \(([^)]*)\) on public\.profiles from authenticated/gi);
+    const grants = columnsOf(/grant select \(([^)]*)\) on public\.profiles to authenticated/gi);
+    const last = revokes.find((r) => r.columns.includes("phone"));
+    expect(last?.columns).toEqual(expect.arrayContaining(PRIVATE_COLUMNS));
+    // ... and nothing grants them back afterwards.
+    for (const grant of grants.filter((g) => g.at > last!.at))
+      for (const column of PRIVATE_COLUMNS) expect(grant.columns).not.toContain(column);
+  });
+
+  it("the profile_cards view is for signed-in students only", () => {
+    expect(sql).toMatch(/revoke all on public\.profile_cards from public, anon/i);
+    expect(sql).toMatch(/grant select on public\.profile_cards to authenticated/i);
+  });
+
+  it("the app reads profiles only through the view", () => {
+    const services = readdirSync(join(process.cwd(), "lib/services"))
+      .filter((f) => f.endsWith(".ts") && !f.endsWith(".test.ts"))
+      .map((f) => readFileSync(join(process.cwd(), "lib/services", f), "utf8"));
+    for (const code of services) expect(code).not.toMatch(/from\("profiles"\)\s*\.select\(/);
+  });
+});
+
 describe("secrets", () => {
   // Only files tracked by git: .env.local and node_modules are ignored on purpose.
   const files = execFileSync("git", ["ls-files"], { encoding: "utf8" })

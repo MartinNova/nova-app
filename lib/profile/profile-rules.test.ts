@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { DEFAULT_FIELD_VISIBILITY } from "@/lib/profile/privacy";
 import type { ProfileUpdate } from "@/types/profile";
 import {
   countryName,
@@ -38,6 +39,7 @@ const update = (overrides: Partial<ProfileUpdate> = {}): ProfileUpdate => ({
   availabilityTimes: [],
   visibility: "everyone",
   showInSuggestions: true,
+  fieldVisibility: { ...DEFAULT_FIELD_VISIBILITY },
   ...overrides,
 });
 

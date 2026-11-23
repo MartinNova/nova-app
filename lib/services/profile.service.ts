@@ -1,54 +1,96 @@
+import {
+  DEFAULT_FIELD_VISIBILITY,
+  redactProfile,
+  resolveFieldVisibility,
+} from "@/lib/profile/privacy";
 import { normalizePhone, validateProfileUpdate } from "@/lib/profile/profile-rules";
 import { readJSON, writeJSON } from "@/lib/storage";
 import { getSupabase } from "@/lib/supabase/client";
 import { AUTH_MODE } from "@/lib/supabase/config";
 import {
+  PROFILES_VIEW,
   PROFILE_COLUMNS,
   rowToProfile,
   updateToRow,
   type ProfileRow,
 } from "@/lib/supabase/profiles";
 import type { Profile, ProfileService, ProfileUpdate } from "@/types/profile";
+import { friendService } from "./friend.service";
 import { userService } from "./user.service";
 
 const PROFILES_KEY = "profiles";
 
 /** Same clean-up for both modes before validating and saving (e.g. the phone number). */
 function tidy(update: ProfileUpdate): ProfileUpdate {
-  return { ...update, phone: normalizePhone(update.phone) };
+  return {
+    ...update,
+    phone: normalizePhone(update.phone),
+    fieldVisibility: resolveFieldVisibility(update.fieldVisibility),
+  };
 }
 const AVATAR_BUCKET = "avatars";
+
+/** Demo mode: a profile with everything, as its owner saved it. */
+async function loadDemoProfile(userId: string): Promise<Profile | null> {
+  const user = (await userService.listUsers()).find((u) => u.id === userId);
+  if (!user) return null;
+  const defaults: ProfileUpdate = {
+    studentId: user.studentId,
+    username: `${user.firstName}.${user.lastName}`.toLowerCase().replace(/[^a-z0-9_.]/g, ""),
+    firstName: user.firstName,
+    lastName: user.lastName,
+    avatarUrl: "",
+    bio: "",
+    country: "",
+    languages: [],
+    instagram: "",
+    linkedin: "",
+    phone: "",
+    program: "",
+    studyStart: "",
+    studyEnd: "",
+    studyStatus: "",
+    sports: [],
+    padelLevel: null,
+    availabilityDays: [],
+    availabilityTimes: [],
+    visibility: "everyone",
+    showInSuggestions: true,
+    fieldVisibility: { ...DEFAULT_FIELD_VISIBILITY },
+  };
+  const saved = readJSON<Record<string, Partial<ProfileUpdate>>>(PROFILES_KEY, {})[userId];
+  return {
+    userId,
+    email: user.email ?? "",
+    ...defaults,
+    ...saved,
+    // Profiles saved before this setting existed get the defaults.
+    fieldVisibility: resolveFieldVisibility(saved?.fieldVisibility),
+  };
+}
+
+/**
+ * Demo mode applies the same privacy rules as the database view: the signed-in demo account
+ * only gets the details it may see (friends = accepted requests in this browser).
+ */
+async function asSeenByViewer(profiles: Profile[]): Promise<Profile[]> {
+  const viewer = await userService.getCurrentUser();
+  const viewerId = viewer?.id ?? null;
+  const friendships = viewerId ? await friendService.listMine(viewerId) : [];
+  return profiles.map((p) =>
+    redactProfile(
+      p,
+      viewerId,
+      friendships.find((f) => f.requesterId === p.userId || f.addresseeId === p.userId),
+    ),
+  );
+}
 
 /** Demo mode: base data from the mock user, edits stored per user in localStorage. */
 const demoProfileService: ProfileService = {
   async getProfile(userId) {
-    const user = (await userService.listUsers()).find((u) => u.id === userId);
-    if (!user) return null;
-    const defaults: ProfileUpdate = {
-      studentId: user.studentId,
-      username: `${user.firstName}.${user.lastName}`.toLowerCase().replace(/[^a-z0-9_.]/g, ""),
-      firstName: user.firstName,
-      lastName: user.lastName,
-      avatarUrl: "",
-      bio: "",
-      country: "",
-      languages: [],
-      instagram: "",
-      linkedin: "",
-      phone: "",
-      program: "",
-      studyStart: "",
-      studyEnd: "",
-      studyStatus: "",
-      sports: [],
-      padelLevel: null,
-      availabilityDays: [],
-      availabilityTimes: [],
-      visibility: "everyone",
-      showInSuggestions: true,
-    };
-    const saved = readJSON<Record<string, Partial<ProfileUpdate>>>(PROFILES_KEY, {})[userId];
-    return { userId, email: user.email ?? "", ...defaults, ...saved };
+    const profile = await loadDemoProfile(userId);
+    return profile ? ((await asSeenByViewer([profile]))[0] ?? null) : null;
   },
   async getProfileByUsername(username) {
     const all = await this.listProfiles();
@@ -56,8 +98,10 @@ const demoProfileService: ProfileService = {
   },
   async listProfiles() {
     const users = await userService.listUsers();
-    const profiles = await Promise.all(users.map((u) => this.getProfile(u.id)));
-    return profiles.filter((p): p is Profile => p !== null && p.visibility === "everyone");
+    const profiles = await Promise.all(users.map((u) => loadDemoProfile(u.id)));
+    return asSeenByViewer(
+      profiles.filter((p): p is Profile => p !== null && p.visibility === "everyone"),
+    );
   },
   async updateProfile(userId, input) {
     const update = tidy(input);
@@ -65,7 +109,7 @@ const demoProfileService: ProfileService = {
     if (error) throw new Error(error);
     const all = readJSON<Record<string, ProfileUpdate>>(PROFILES_KEY, {});
     writeJSON(PROFILES_KEY, { ...all, [userId]: update });
-    return (await this.getProfile(userId)) as Profile;
+    return (await loadDemoProfile(userId)) as Profile;
   },
   async uploadAvatar(_userId, image) {
     // No file storage in demo mode: keep the (small, resized) picture as a data URL.
@@ -86,11 +130,14 @@ async function emailIfMine(userId: string): Promise<string> {
   return session?.user.id === userId ? (session.user.email ?? "") : "";
 }
 
-/** Accounts mode: the `profiles` table and the `avatars` bucket. RLS only allows editing your own row. */
+/**
+ * Accounts mode: reads go through the `profile_cards` view (hidden details arrive empty),
+ * writes go to the `profiles` table. RLS only allows editing your own row.
+ */
 const supabaseProfileService: ProfileService = {
   async getProfile(userId) {
     const { data, error } = await getSupabase()
-      .from("profiles")
+      .from(PROFILES_VIEW)
       .select(PROFILE_COLUMNS)
       .eq("id", userId)
       .maybeSingle();
@@ -99,7 +146,7 @@ const supabaseProfileService: ProfileService = {
   },
   async getProfileByUsername(username) {
     const { data, error } = await getSupabase()
-      .from("profiles")
+      .from(PROFILES_VIEW)
       .select(PROFILE_COLUMNS)
       .eq("username", username.toLowerCase())
       .maybeSingle();
@@ -108,7 +155,7 @@ const supabaseProfileService: ProfileService = {
   },
   async listProfiles() {
     const { data, error } = await getSupabase()
-      .from("profiles")
+      .from(PROFILES_VIEW)
       .select(PROFILE_COLUMNS)
       .eq("visibility", "everyone")
       .order("first_name");
@@ -119,27 +166,27 @@ const supabaseProfileService: ProfileService = {
     const update = tidy(input);
     const error = validateProfileUpdate(update);
     if (error) throw new Error(error);
-    const { data, error: dbError } = await getSupabase()
+    // No .select() here: the table doesn't hand out the private columns, the view does.
+    const { error: dbError } = await getSupabase()
       .from("profiles")
       .update(updateToRow(update))
-      .eq("id", userId)
-      .select(PROFILE_COLUMNS)
-      .single();
+      .eq("id", userId);
     // 23505 = unique violation, i.e. the username is taken.
     if (dbError?.code === "23505") throw new Error("This username is already taken.");
     // 23514 = check violation, e.g. a phone number the app's check let through.
     if (dbError?.code === "23514") throw new Error("Please check your profile details.");
     if (dbError) throw dbError;
+    const saved = await this.getProfile(userId);
+    if (!saved) throw new Error("Could not load your profile. Please try again.");
     // The student number is changed through a checked function (digits only, your own row).
-    const row = data as unknown as ProfileRow;
     const studentId = update.studentId.trim();
-    if (studentId !== (row.student_id ?? "")) {
+    if (studentId !== saved.studentId) {
       const { error: idError } = await getSupabase().rpc("set_my_student_id", {
         new_student_id: studentId,
       });
       if (idError) throw new Error("Could not save your student ID. Please try again.");
     }
-    return rowToProfile({ ...row, student_id: studentId }, await emailIfMine(userId));
+    return { ...saved, studentId };
   },
   async uploadAvatar(userId, image) {
     // New file name each time, so browsers don't show the old cached picture.

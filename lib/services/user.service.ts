@@ -3,7 +3,7 @@ import { splitName, studentIdFromEmail } from "@/lib/auth/nova-account";
 import { readJSON, writeJSON } from "@/lib/storage";
 import { getSupabase } from "@/lib/supabase/client";
 import { AUTH_MODE } from "@/lib/supabase/config";
-import { USER_COLUMNS, rowToUser, type ProfileRow } from "@/lib/supabase/profiles";
+import { PROFILES_VIEW, USER_COLUMNS, rowToUser, type ProfileRow } from "@/lib/supabase/profiles";
 import type { User, UserService } from "@/types/user";
 
 const CURRENT_USER_KEY = "current-user-id";
@@ -73,7 +73,7 @@ const supabaseUserService: UserService = {
   async listUsers() {
     // Profiles are only visible when signed in; skip the request otherwise.
     if (!(await hasSession())) return [];
-    const { data, error } = await getSupabase().from("profiles").select(USER_COLUMNS);
+    const { data, error } = await getSupabase().from(PROFILES_VIEW).select(USER_COLUMNS);
     if (error) throw error;
     return (data as ProfileRow[]).map((row) => rowToUser(row));
   },
@@ -85,7 +85,7 @@ const supabaseUserService: UserService = {
     } = await supabase.auth.getUser();
     if (!user) return null;
     const { data } = await supabase
-      .from("profiles")
+      .from(PROFILES_VIEW)
       .select(USER_COLUMNS)
       .eq("id", user.id)
       .maybeSingle();

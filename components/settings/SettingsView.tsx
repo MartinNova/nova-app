@@ -12,6 +12,7 @@ import { AccountSection } from "./AccountSection";
 import {
   AboutSection,
   ContactSection,
+  FieldPrivacySection,
   InterestsSection,
   PrivacySection,
   StudySection,
@@ -61,6 +62,7 @@ function SettingsForm({ profile, onSaved }: { profile: Profile; onSaved: () => P
         <StudySection form={form} set={set} />
         <InterestsSection form={form} set={set} />
         <PrivacySection form={form} set={set} />
+        <FieldPrivacySection form={form} set={set} />
 
         {/* Sticky save bar above the bottom navigation. */}
         <div className="border-border bg-surface/95 sticky bottom-20 z-10 flex items-center gap-3 rounded-2xl border p-3 shadow-lg backdrop-blur">

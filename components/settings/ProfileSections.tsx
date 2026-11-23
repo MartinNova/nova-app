@@ -1,23 +1,36 @@
 "use client";
 
-import { Camera, ChevronDown, Phone } from "lucide-react";
+import {
+  AtSign,
+  CalendarDays,
+  Camera,
+  ChevronDown,
+  Globe,
+  GraduationCap,
+  Phone,
+  Quote,
+  Trophy,
+} from "lucide-react";
 import { useRef, useState } from "react";
 import { Avatar } from "@/components/ui/Avatar";
-import { GroupedList, InputRow } from "@/components/ui/GroupedList";
+import { GroupedList, InputRow, SelectRow, type TileTone } from "@/components/ui/GroupedList";
 import { squareAvatar } from "@/lib/profile/avatar";
 import { DIAL_CODES, joinPhone, splitPhone } from "@/lib/profile/phone";
 import { COUNTRY_CODES, countryName, flagEmoji, validatePhone } from "@/lib/profile/profile-rules";
 import { profileService } from "@/lib/services/profile.service";
 import { PADEL_LEVELS } from "@/types/padel";
 import {
+  AUDIENCES,
   BIO_MAX_LENGTH,
   DAY_TIMES,
   LANGUAGES,
   NOVA_PROGRAMS,
+  PRIVATE_FIELDS,
   SPORT_INTERESTS,
   STUDY_STATUSES,
   VISIBILITIES,
   WEEKDAYS,
+  type PrivateField,
   type ProfileUpdate,
   type StudyStatus,
   type Visibility,
@@ -279,7 +292,7 @@ export function ContactSection({ form, set }: SectionProps) {
         {error ? (
           <span className="text-red-700 dark:text-red-400">{error}</span>
         ) : (
-          "Optional. Students who can see your profile can call or text you. Leave it empty to hide it."
+          "Optional. Choose under Privacy who can see it (friends by default). Leave it empty to hide it."
         )}
       </p>
     </div>
@@ -408,5 +421,47 @@ export function PrivacySection({ form, set }: SectionProps) {
         </span>
       </label>
     </Section>
+  );
+}
+
+const PRIVACY_ICON = "size-[18px]";
+const FIELD_ROWS: Record<PrivateField, { icon: React.ReactNode; tone: TileTone }> = {
+  photo: { icon: <Camera className={PRIVACY_ICON} aria-hidden />, tone: "brand" },
+  bio: { icon: <Quote className={PRIVACY_ICON} aria-hidden />, tone: "ocean" },
+  country: { icon: <Globe className={PRIVACY_ICON} aria-hidden />, tone: "ocean" },
+  program: { icon: <GraduationCap className={PRIVACY_ICON} aria-hidden />, tone: "brand" },
+  interests: { icon: <Trophy className={PRIVACY_ICON} aria-hidden />, tone: "sport" },
+  availability: { icon: <CalendarDays className={PRIVACY_ICON} aria-hidden />, tone: "sport" },
+  social: { icon: <AtSign className={PRIVACY_ICON} aria-hidden />, tone: "food" },
+  phone: { icon: <Phone className={PRIVACY_ICON} aria-hidden />, tone: "sport" },
+};
+
+/** Settings -> "Who can see what": Everyone / Friends / Only me per profile detail. */
+export function FieldPrivacySection({ form, set }: SectionProps) {
+  return (
+    <div className="grid gap-2">
+      <GroupedList title="Who can see what">
+        {(Object.entries(PRIVATE_FIELDS) as [PrivateField, string][]).map(([field, label]) => (
+          <SelectRow
+            key={field}
+            icon={FIELD_ROWS[field].icon}
+            tone={FIELD_ROWS[field].tone}
+            label={label}
+            value={form.fieldVisibility[field]}
+            options={AUDIENCES}
+            onChange={(audience) =>
+              set("fieldVisibility", { ...form.fieldVisibility, [field]: audience })
+            }
+          />
+        ))}
+      </GroupedList>
+      <p className="text-muted mx-4 text-[13px]">
+        {form.visibility === "private"
+          ? "Your profile is set to Only me, so nobody else sees any of this right now. "
+          : ""}
+        Friends are students who accepted your friend request. Your name, student ID, languages and
+        study status with start and end are always shown on your profile.
+      </p>
+    </div>
   );
 }

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { DEFAULT_FIELD_VISIBILITY } from "@/lib/profile/privacy";
 import type { Profile } from "@/types/profile";
 import {
   applyOnboarding,
@@ -31,6 +32,7 @@ const profile: Profile = {
   availabilityTimes: [],
   visibility: "everyone",
   showInSuggestions: true,
+  fieldVisibility: { ...DEFAULT_FIELD_VISIBILITY },
 } as Profile;
 
 const answers: OnboardingAnswers = {

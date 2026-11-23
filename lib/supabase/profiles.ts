@@ -1,3 +1,4 @@
+import { resolveFieldVisibility } from "@/lib/profile/privacy";
 import type { Profile, ProfileUpdate, StudyStatus, Visibility } from "@/types/profile";
 import type { User } from "@/types/user";
 
@@ -26,13 +27,22 @@ export interface ProfileRow {
   availability_times: string[];
   visibility: string;
   show_in_suggestions: boolean;
+  /** Only filled for your own row; null for other students (see profile_cards). */
+  field_visibility?: Record<string, string> | null;
 }
+
+/**
+ * Where the app reads profiles from: a view over `profiles` that empties every detail the
+ * signed-in student may not see (Settings -> Privacy), so hidden values never reach the browser.
+ * The table itself no longer hands out those columns (see supabase/migrations).
+ */
+export const PROFILES_VIEW = "profile_cards";
 
 /** Everything except e-mail: other students can't read it (see migrations). */
 export const PROFILE_COLUMNS =
   "id, student_id, username, first_name, last_name, avatar_url, bio, country, languages, " +
   "instagram, linkedin, phone, program, study_start, study_end, study_status, sports, padel_level, " +
-  "availability_days, availability_times, visibility, show_in_suggestions";
+  "availability_days, availability_times, visibility, show_in_suggestions, field_visibility";
 
 /** Enough for names and avatars in lists (padel players, running clubs, ...). */
 export const USER_COLUMNS = "id, username, first_name, last_name, avatar_url";
@@ -64,6 +74,7 @@ export function rowToProfile(row: ProfileRow, email = ""): Profile {
     availabilityTimes: row.availability_times ?? [],
     visibility: row.visibility as Visibility,
     showInSuggestions: row.show_in_suggestions,
+    fieldVisibility: resolveFieldVisibility(row.field_visibility),
   };
 }
 
@@ -110,5 +121,6 @@ export function updateToRow(update: ProfileUpdate) {
     availability_times: update.availabilityTimes,
     visibility: update.visibility,
     show_in_suggestions: update.showInSuggestions,
+    field_visibility: update.fieldVisibility,
   };
 }
