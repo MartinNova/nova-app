@@ -13,6 +13,8 @@ interface HubHeroProps {
   cropTop?: boolean;
   /** Sub-pages: shows "‹ Sport" in the top bar. */
   backHref?: string;
+  /** Main tabs (Study, Campus, Sport, Friends): no big name on the photo, the tab bar says it. */
+  hideTitle?: boolean;
 }
 
 /**
@@ -28,6 +30,7 @@ export function HubHero({
   focus = "object-center",
   cropTop = false,
   backHref,
+  hideTitle = false,
 }: HubHeroProps) {
   return (
     <section className="relative mb-6">
@@ -52,8 +55,22 @@ export function HubHero({
         </div>
       </div>
       {/* The title sits where the photo has faded into the page, so it reads in light and dark. */}
-      <LargeTitle title={title} backHref={backHref} immersive className="relative -mt-16">
-        <p className="text-muted mt-1 text-[17px] leading-snug">{tagline}</p>
+      <LargeTitle
+        title={title}
+        backHref={backHref}
+        immersive
+        hideTitle={hideTitle}
+        className={`relative ${hideTitle ? "-mt-8" : "-mt-16"}`}
+      >
+        <p
+          className={
+            hideTitle
+              ? "text-foreground text-[20px] leading-snug font-semibold"
+              : "text-muted mt-1 text-[17px] leading-snug"
+          }
+        >
+          {tagline}
+        </p>
       </LargeTitle>
     </section>
   );

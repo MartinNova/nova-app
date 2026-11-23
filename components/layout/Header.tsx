@@ -42,11 +42,10 @@ export function Header() {
   const whiteLogo = PHOTO_PAGES.includes(pathname) && !glass;
   // The home artwork is light (cream), so over it the logo stays black, also in dark mode.
   const overLightArt = pathname === "/" && overPhoto;
-  // Main tab pages always show their own name in the middle; other pages show it once scrolled.
-  const mainLabel = showLogo ? labelForHref(pathname) : null;
-  // Over the home artwork the bar shows only logo and account, so the drawing stays clear.
-  const titleVisible = (showLogo && !overLightArt) || collapsed;
-  const centerTitle = mainLabel ?? pageTitle?.title;
+  // The small title in the middle shows only once the page's large title has scrolled away;
+  // at the top of a page (also the main tabs: Study, Campus, Sport, Friends) the bar stays clear.
+  const titleVisible = collapsed && !overLightArt;
+  const centerTitle = pageTitle?.title ?? (showLogo ? labelForHref(pathname) : null);
 
   return (
     <header

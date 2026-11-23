@@ -19,6 +19,7 @@ export default function SportPage() {
   return (
     <>
       <HubHero
+        hideTitle
         title="Sport"
         tagline="Move your body, clear your mind."
         image={{

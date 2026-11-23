@@ -9,6 +9,7 @@ export default function CampusPage() {
   return (
     <>
       <HubHero
+        hideTitle
         title="Campus"
         tagline="Life by the sea in Carcavelos."
         image={{
