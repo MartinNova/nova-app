@@ -38,7 +38,14 @@ export interface SubModule extends NavItem {
  * and the app still opens on Home ("/", also the manifest's start_url).
  */
 export const MAIN_NAV: NavItem[] = [
-  { href: "/sport", label: "Sport", icon: Trophy, status: "live" },
+  // Campus bundles library, study rooms, map and Food Options (/canteen stays its own page).
+  {
+    href: "/campus",
+    label: "Campus",
+    icon: School,
+    status: "live",
+    alsoActiveFor: ["/canteen"],
+  },
   // Study Hub bundles the timetable and the to-do lists (/timetable stays its own page).
   {
     href: "/study",
@@ -48,15 +55,8 @@ export const MAIN_NAV: NavItem[] = [
     alsoActiveFor: ["/timetable"],
   },
   { href: "/", label: "Home", icon: Home, status: "live" },
+  { href: "/sport", label: "Sport", icon: Trophy, status: "live" },
   { href: "/friends", label: "Friends", icon: Users, status: "live" },
-  // Campus bundles library, study rooms, map and Food Options (/canteen stays its own page).
-  {
-    href: "/campus",
-    label: "Campus",
-    icon: School,
-    status: "live",
-    alsoActiveFor: ["/canteen"],
-  },
 ];
 
 /** Sub-modules of the Study Hub. */
