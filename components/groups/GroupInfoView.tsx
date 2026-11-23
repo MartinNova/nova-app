@@ -76,10 +76,8 @@ export function GroupInfoView() {
       Number(b.role === "admin") - Number(a.role === "admin") ||
       memberName(a.userId).localeCompare(memberName(b.userId)),
   );
-  // Only your friends can be added (they don't get asked first).
-  const notInGroup = users.filter(
-    (u) => friends.has(u.id) && !group.members.some((m) => m.userId === u.id),
-  );
+  // Anyone on the app can be added; your friends are listed first.
+  const notInGroup = users.filter((u) => !group.members.some((m) => m.userId === u.id));
 
   /** Runs a change, shows errors, and refreshes. */
   async function run(action: () => Promise<void>) {
@@ -320,9 +318,10 @@ export function GroupInfoView() {
           <div className="flex flex-col gap-4">
             <MemberPicker
               people={notInGroup}
+              friendIds={friends}
               selected={adding}
               onChange={setAdding}
-              emptyText="All your friends are already in this group."
+              emptyText="Everyone on the app is already in this group."
             />
             <button
               type="button"
