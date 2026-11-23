@@ -12,7 +12,7 @@ e-mail and password, or look around without an account.
 | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Home      | Your day: next lecture, surf in Carcavelos, food, padel and to-dos at a glance                                                                                          |
 | Sport     | **Padel**: post a booked court, ask to join, organiser accepts or declines (live). **Running**: clubs and runs. **Surf**: forecast and schools. **Gym**, **Yoga**       |
-| Study Hub | **Timetable** (weekly lectures, `.ics` import, holidays), **To-dos** (lists, board), **Deadlines & Payments** (tuition dates from netPA with calendar reminders)        |
+| Study Hub | **Timetable** (weekly lectures, `.ics` import, holidays), **To-dos** (lists, board), **Payment deadlines** (tuition dates from netPA with calendar reminders)           |
 | Friends   | Find Nova students by programme and sport, view profiles, **direct messages** with unread count                                                                         |
 | Campus    | **Getting to campus** (next CP trains from Carcavelos/Oeiras, your train after class, Uber, map), **Rooms & flats** (listings with photos), Food Options, library links |
 | Account   | Profile with picture, programme and links; settings; change e-mail/password; delete account                                                                             |

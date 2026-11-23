@@ -1,5 +1,5 @@
 /**
- * Deadlines & Payments: data contract.
+ * Payment deadlines: data contract.
  * Dates are local Lisbon dates "YYYY-MM-DD".
  */
 
