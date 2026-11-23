@@ -24,11 +24,17 @@ interface ProfileCardProps {
   showOnline?: boolean;
 }
 
-/** How a student appears to others: picture, name, programme, interests. */
+/**
+ * How a student appears to others: picture, name, programme, interests.
+ * Details the viewer may not see arrive empty from the profile service and are simply left out.
+ */
 export function ProfileCard({ profile: p, today, showOnline = true }: ProfileCardProps) {
   const { presence } = usePresence();
   const progress = studyProgress(p.studyStart, p.studyEnd, today);
   const period = [formatMonth(p.studyStart), formatMonth(p.studyEnd)].filter(Boolean).join(" – ");
+  const studyDetails = [progress, period, p.studyStatus && STUDY_STATUSES[p.studyStatus]]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <Card className="grid gap-5">
@@ -56,16 +62,13 @@ export function ProfileCard({ profile: p, today, showOnline = true }: ProfileCar
 
       {p.bio && <p className="text-sm">{p.bio}</p>}
 
-      {p.program && (
+      {/* Status and dates are always visible; the programme can be hidden (Privacy). */}
+      {(p.program || studyDetails) && (
         <div className="flex gap-3">
           <GraduationCap className="text-brand mt-0.5 size-5 shrink-0" aria-hidden />
           <div className="text-sm">
-            <p className="font-medium">{p.program}</p>
-            <p className="text-muted">
-              {[progress, period, p.studyStatus && STUDY_STATUSES[p.studyStatus]]
-                .filter(Boolean)
-                .join(" · ")}
-            </p>
+            {p.program && <p className="font-medium">{p.program}</p>}
+            {studyDetails && <p className={p.program ? "text-muted" : ""}>{studyDetails}</p>}
           </div>
         </div>
       )}

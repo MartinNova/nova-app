@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { ChevronsUpDown, X } from "lucide-react";
 import Link from "next/link";
 import { useId } from "react";
 
@@ -104,6 +104,59 @@ export function InputRow({
           </button>
         )}
       </span>
+    </div>
+  );
+}
+
+interface SelectRowProps<T extends string> {
+  icon: React.ReactNode;
+  tone?: TileTone;
+  label: string;
+  value: T;
+  /** Value -> text, in menu order. */
+  options: Record<T, string>;
+  onChange: (next: T) => void;
+}
+
+/**
+ * A row with a pop-up menu on the right (current value + up/down chevrons), as in iOS Settings.
+ * A native <select> lies invisibly on top, so the phone shows its own picker.
+ */
+export function SelectRow<T extends string>({
+  icon,
+  tone = "brand",
+  label,
+  value,
+  options,
+  onChange,
+}: SelectRowProps<T>) {
+  const id = useId();
+  return (
+    <div className="group has-[select:focus-visible]:bg-brand/5 active:bg-brand/5 relative flex min-h-14 items-center gap-3.5 pl-4 transition-colors">
+      <span className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${TILE[tone]}`}>
+        {icon}
+      </span>
+      <span className="border-border flex min-h-14 min-w-0 flex-1 items-center gap-2 self-stretch border-b py-2 pr-3.5 group-last:border-b-0">
+        <label htmlFor={id} className="min-w-0 flex-1 truncate text-[17px]">
+          {label}
+        </label>
+        <span className="text-muted flex shrink-0 items-center gap-1 text-[17px]" aria-hidden>
+          {options[value]}
+          <ChevronsUpDown className="size-4" />
+        </span>
+      </span>
+      <select
+        id={id}
+        value={value}
+        onChange={(e) => onChange(e.target.value as T)}
+        className="absolute inset-0 cursor-pointer opacity-0"
+      >
+        {(Object.entries(options) as [T, string][]).map(([option, text]) => (
+          <option key={option} value={option}>
+            {text}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }

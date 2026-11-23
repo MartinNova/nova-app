@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { DEFAULT_FIELD_VISIBILITY } from "@/lib/profile/privacy";
 import { validateMessage } from "@/lib/messages/messages";
 import { checkCanRequest } from "@/lib/padel/matches";
 import {
@@ -56,6 +57,7 @@ describe("accounts", () => {
     availabilityTimes: [],
     visibility: "everyone",
     showInSuggestions: true,
+    fieldVisibility: { ...DEFAULT_FIELD_VISIBILITY },
     ...changes,
   });
 

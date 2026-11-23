@@ -67,6 +67,31 @@ export const VISIBILITIES = {
 } as const;
 export type Visibility = keyof typeof VISIBILITIES;
 
+/** Who may see one profile detail. "friends" = accepted friend requests only. */
+export const AUDIENCES = {
+  everyone: "Everyone",
+  friends: "Friends",
+  private: "Only me",
+} as const;
+export type Audience = keyof typeof AUDIENCES;
+
+/**
+ * Profile details with their own audience (Settings -> Privacy). Name, username, student ID,
+ * languages and study status with start/end are always visible to students who can see the profile.
+ */
+export const PRIVATE_FIELDS = {
+  photo: "Profile picture",
+  bio: "About you",
+  country: "Home country",
+  program: "Programme",
+  interests: "Sports & padel level",
+  availability: "Usually free",
+  social: "Instagram & LinkedIn",
+  phone: "Mobile",
+} as const;
+export type PrivateField = keyof typeof PRIVATE_FIELDS;
+export type FieldVisibility = Record<PrivateField, Audience>;
+
 export interface Profile {
   /** Same id as the user (auth user id in Supabase). */
   userId: string;
@@ -113,6 +138,11 @@ export interface Profile {
 
   visibility: Visibility;
   showInSuggestions: boolean;
+  /**
+   * Who sees which detail (see PRIVATE_FIELDS). Only known for your own profile; for other
+   * students it holds the defaults, and hidden details simply arrive empty.
+   */
+  fieldVisibility: FieldVisibility;
 }
 
 /** Everything a student may change themselves. */
