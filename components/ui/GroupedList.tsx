@@ -5,6 +5,7 @@ import { useId } from "react";
 /** Icon tile colours, like the coloured squares in iOS Settings. White glyph on each passes 3:1. */
 const TILE = {
   brand: "bg-brand text-brand-foreground",
+  navy: "bg-[#0b2a4a] text-white ring-1 ring-white/15",
   ocean: "bg-ocean text-ocean-foreground",
   food: "bg-[#b5651d] text-white",
   sport: "bg-[#2e7d32] text-white",

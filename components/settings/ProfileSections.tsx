@@ -412,14 +412,14 @@ export function PrivacySection({ form, set }: SectionProps) {
 
 const PRIVACY_ICON = "size-[18px]";
 const FIELD_ROWS: Record<PrivateField, { icon: React.ReactNode; tone: TileTone }> = {
-  photo: { icon: <Camera className={PRIVACY_ICON} aria-hidden />, tone: "brand" },
-  bio: { icon: <Quote className={PRIVACY_ICON} aria-hidden />, tone: "ocean" },
-  country: { icon: <Globe className={PRIVACY_ICON} aria-hidden />, tone: "ocean" },
-  program: { icon: <GraduationCap className={PRIVACY_ICON} aria-hidden />, tone: "brand" },
-  interests: { icon: <Trophy className={PRIVACY_ICON} aria-hidden />, tone: "sport" },
-  availability: { icon: <CalendarDays className={PRIVACY_ICON} aria-hidden />, tone: "sport" },
-  social: { icon: <AtSign className={PRIVACY_ICON} aria-hidden />, tone: "food" },
-  phone: { icon: <Phone className={PRIVACY_ICON} aria-hidden />, tone: "sport" },
+  photo: { icon: <Camera className={PRIVACY_ICON} aria-hidden />, tone: "navy" },
+  bio: { icon: <Quote className={PRIVACY_ICON} aria-hidden />, tone: "navy" },
+  country: { icon: <Globe className={PRIVACY_ICON} aria-hidden />, tone: "navy" },
+  program: { icon: <GraduationCap className={PRIVACY_ICON} aria-hidden />, tone: "navy" },
+  interests: { icon: <Trophy className={PRIVACY_ICON} aria-hidden />, tone: "navy" },
+  availability: { icon: <CalendarDays className={PRIVACY_ICON} aria-hidden />, tone: "navy" },
+  social: { icon: <AtSign className={PRIVACY_ICON} aria-hidden />, tone: "navy" },
+  phone: { icon: <Phone className={PRIVACY_ICON} aria-hidden />, tone: "navy" },
 };
 
 /** Settings -> "Who can see what": Everyone / Friends / Only me per profile detail. */
