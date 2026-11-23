@@ -1,4 +1,5 @@
 import {
+  MAX_GROUP_DESCRIPTION_LENGTH,
   MAX_GROUP_MEMBERS,
   MAX_GROUP_NAME_LENGTH,
   type ChatGroup,
@@ -13,6 +14,13 @@ export function validateGroupName(name: string): string | null {
   if (text.length > MAX_GROUP_NAME_LENGTH)
     return `Group names can have at most ${MAX_GROUP_NAME_LENGTH} characters.`;
   return null;
+}
+
+/** Returns an error message, or null if the description can be saved (empty is fine). */
+export function validateGroupDescription(description: string): string | null {
+  return description.trim().length > MAX_GROUP_DESCRIPTION_LENGTH
+    ? `The description can have at most ${MAX_GROUP_DESCRIPTION_LENGTH} characters.`
+    : null;
 }
 
 /** Returns an error message, or null if a new group with these other members can be created. */

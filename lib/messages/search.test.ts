@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { matchingChats, normalize, searchMessages, snippetOf, type SearchItem } from "./search";
+import {
+  extractLinks,
+  linkHref,
+  matchingChats,
+  normalize,
+  searchMessages,
+  sharedMedia,
+  snippetOf,
+  type SearchItem,
+} from "./search";
 
 const item = (id: string, changes: Partial<SearchItem> = {}): SearchItem => ({
   id,
@@ -81,5 +90,24 @@ describe("matchingChats", () => {
 
   it("normalizes accents", () => {
     expect(normalize("São João")).toBe("sao joao");
+  });
+});
+
+describe("media, links and docs", () => {
+  it("finds every link in a message, without trailing punctuation", () => {
+    expect(extractLinks("Slides: https://moodle.pt/a, and www.novasbe.pt.")).toEqual([
+      "https://moodle.pt/a",
+      "www.novasbe.pt",
+    ]);
+    expect(extractLinks("no links here")).toEqual([]);
+    expect(linkHref("www.novasbe.pt")).toBe("https://www.novasbe.pt");
+    expect(linkHref("https://x.pt")).toBe("https://x.pt");
+  });
+
+  it("splits a chat into photos, documents and links, newest first", () => {
+    const media = sharedMedia(all);
+    expect(media.photos.map((m) => m.id)).toEqual(["3"]);
+    expect(media.files.map((m) => m.id)).toEqual(["2"]);
+    expect(media.links.map((l) => l.url)).toEqual(["https://moodle.novasbe.pt/course/42"]);
   });
 });

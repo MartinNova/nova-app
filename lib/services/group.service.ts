@@ -2,6 +2,7 @@ import {
   isAdmin,
   isMember,
   membersAfterRemoval,
+  validateGroupDescription,
   validateGroupName,
   validateNewGroup,
 } from "@/lib/groups/groups";
@@ -48,7 +49,9 @@ const GROUPS_KEY = "groups";
 const GROUP_MESSAGES_KEY = "group-messages";
 const listeners = new Set<() => void>();
 
-const loadGroups = () => readJSON<ChatGroup[]>(GROUPS_KEY, []);
+// Groups saved before descriptions existed have none.
+const loadGroups = () =>
+  readJSON<ChatGroup[]>(GROUPS_KEY, []).map((g) => ({ ...g, description: g.description ?? "" }));
 // Messages saved before replies and reactions existed lack those fields.
 const loadMessages = () =>
   readJSON<GroupMessage[]>(GROUP_MESSAGES_KEY, []).map((m) => ({
@@ -109,6 +112,7 @@ const localGroupService: GroupService = {
       id: crypto.randomUUID(),
       name: name.trim(),
       photoUrl: photo ? await toDataUrl(photo) : null,
+      description: "",
       createdBy: userId,
       createdAt: now,
       members: [userId, ...others].map((id) => ({
@@ -121,15 +125,20 @@ const localGroupService: GroupService = {
     saveGroups([...loadGroups(), group]);
     return group;
   },
-  async updateGroup(groupId, { name, photo }) {
+  async updateGroup(groupId, { name, photo, description }) {
     if (name !== undefined) {
       const problem = validateGroupName(name);
+      if (problem) throw new Error(problem);
+    }
+    if (description !== undefined) {
+      const problem = validateGroupDescription(description);
       if (problem) throw new Error(problem);
     }
     const photoUrl = photo ? await toDataUrl(photo) : photo;
     changeGroup(groupId, (g) => ({
       ...g,
       ...(name !== undefined ? { name: name.trim() } : {}),
+      ...(description !== undefined ? { description: description.trim() } : {}),
       ...(photoUrl !== undefined ? { photoUrl } : {}),
     }));
   },
@@ -254,6 +263,8 @@ interface GroupRow {
   id: string;
   name: string;
   photo_path: string | null;
+  /** Missing before the description migration ran. */
+  description?: string | null;
   created_by: string;
   created_at: string;
   chat_group_members: MemberRow[];
@@ -287,6 +298,7 @@ async function rowsToGroups(rows: GroupRow[]): Promise<ChatGroup[]> {
     id: row.id,
     name: row.name,
     photoUrl: row.photo_path ? (photos.get(row.photo_path) ?? null) : null,
+    description: row.description ?? "",
     createdBy: row.created_by,
     createdAt: row.created_at,
     members: row.chat_group_members.map((m) => ({
@@ -400,12 +412,17 @@ const supabaseGroupService: GroupService = {
     if (!group) throw new Error("Could not load the new group.");
     return group;
   },
-  async updateGroup(groupId, { name, photo }) {
-    const changes: { name?: string; photo_path?: string | null } = {};
+  async updateGroup(groupId, { name, photo, description }) {
+    const changes: { name?: string; photo_path?: string | null; description?: string } = {};
     if (name !== undefined) {
       const problem = validateGroupName(name);
       if (problem) throw new Error(problem);
       changes.name = name.trim();
+    }
+    if (description !== undefined) {
+      const problem = validateGroupDescription(description);
+      if (problem) throw new Error(problem);
+      changes.description = description.trim();
     }
     let oldPath: string | null = null;
     if (photo !== undefined) {

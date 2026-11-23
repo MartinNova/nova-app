@@ -1,9 +1,9 @@
 "use client";
 
-import { ImageOff, LogOut, Pencil, UserPlus } from "lucide-react";
+import { ImageOff, LogOut, Pencil, Search, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCurrentUser } from "@/components/providers/CurrentUserProvider";
 import { usePresence } from "@/components/providers/PresenceProvider";
 import { Sheet } from "@/components/timetable/Sheet";
@@ -13,11 +13,18 @@ import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { isAdmin } from "@/lib/groups/groups";
 import { groupService } from "@/lib/services/group.service";
-import { MAX_GROUP_NAME_LENGTH, type GroupMember } from "@/types/groups";
+import {
+  MAX_GROUP_DESCRIPTION_LENGTH,
+  MAX_GROUP_NAME_LENGTH,
+  type GroupMember,
+  type GroupMessage,
+} from "@/types/groups";
 import type { User } from "@/types/user";
 import { GroupAvatar } from "./GroupAvatar";
+import { GroupMedia } from "./GroupMedia";
 import { GroupPhotoPicker } from "./GroupPhotoPicker";
 import { useFriendIds } from "@/components/friends/useFriendships";
+import { GroupSearchSheet } from "./GroupSearchSheet";
 import { fullName, MemberPicker } from "./MemberPicker";
 import { useGroup } from "./useGroup";
 
@@ -28,7 +35,10 @@ const ROW_INNER =
 const SHEET_ACTION =
   "bg-background active:bg-brand/10 flex h-12 w-full items-center justify-center rounded-2xl text-[17px] font-medium transition";
 
-/** Group info (?id=…): picture, name, members and admin actions, like WhatsApp's group info. */
+/**
+ * Group info (?id=…) like WhatsApp's: picture, name, description, search, media/links/docs,
+ * members and admin actions.
+ */
 export function GroupInfoView() {
   const groupId = useSearchParams().get("id") ?? "";
   const router = useRouter();
@@ -39,6 +49,9 @@ export function GroupInfoView() {
   const { group, reload } = useGroup(groupId, user?.id);
 
   const [editingName, setEditingName] = useState<string | null>(null);
+  const [editingDescription, setEditingDescription] = useState<string | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [chat, setChat] = useState<{ groupId: string; messages: GroupMessage[] } | null>(null);
   const [selectedMember, setSelectedMember] = useState<GroupMember | null>(null);
   const [adding, setAdding] = useState<string[] | null>(null);
   const [confirmLeave, setConfirmLeave] = useState(false);
@@ -46,6 +59,21 @@ export function GroupInfoView() {
   const [error, setError] = useState<string | null>(null);
 
   const backHref = `/friends/group?id=${groupId}`;
+
+  // The group's messages, for "Media, links and docs" and search.
+  const memberId = group ? user?.id : undefined;
+  useEffect(() => {
+    if (!memberId || !groupId) return;
+    let cancelled = false;
+    groupService
+      .listMessages(groupId)
+      .catch(() => [])
+      .then((messages) => !cancelled && setChat({ groupId, messages }));
+    return () => {
+      cancelled = true;
+    };
+  }, [groupId, memberId]);
+  const messages = chat?.groupId === groupId ? chat.messages : [];
 
   if (!ready || (user && group === undefined)) {
     return <div className="bg-border mt-14 h-64 animate-pulse rounded-2xl" />;
@@ -101,6 +129,19 @@ export function GroupInfoView() {
     if (await run(() => groupService.updateGroup(group!.id, { name: editingName })))
       setEditingName(null);
   }
+
+  async function saveDescription(e: React.FormEvent) {
+    e.preventDefault();
+    if (editingDescription === null) return;
+    const description = editingDescription;
+    if (await run(() => groupService.updateGroup(group!.id, { description })))
+      setEditingDescription(null);
+  }
+
+  const creator = userById(group.createdBy);
+  const createdLine = `Created by ${group.createdBy === me.id ? "you" : creator ? fullName(creator) : "a former member"}, ${new Date(
+    group.createdAt,
+  ).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`;
 
   async function leave() {
     if (await run(() => groupService.removeMember(group!.id, me.id))) {
@@ -160,22 +201,23 @@ export function GroupInfoView() {
             </div>
           )}
 
-          {/* Group settings (admins): name, people, picture, like WhatsApp's action tiles. */}
-          {admin && editingName === null && (
-            <div className="mt-1 flex w-full max-w-sm gap-2">
+          {/* Action tiles like WhatsApp: search for everyone; name, people, picture for admins. */}
+          {editingName === null && (
+            <div className="mt-1 flex w-full max-w-md gap-2">
               {[
+                { label: "Search", icon: Search, run: () => setSearching(true), show: true },
+                { label: "Add people", icon: UserPlus, run: () => setAdding([]), show: admin },
                 {
                   label: "Edit name",
                   icon: Pencil,
                   run: () => setEditingName(group.name),
-                  show: true,
+                  show: admin,
                 },
-                { label: "Add people", icon: UserPlus, run: () => setAdding([]), show: true },
                 {
                   label: "Remove picture",
                   icon: ImageOff,
                   run: () => void run(() => groupService.updateGroup(group.id, { photo: null })),
-                  show: Boolean(group.photoUrl),
+                  show: admin && Boolean(group.photoUrl),
                 },
               ]
                 .filter((a) => a.show)
@@ -199,6 +241,78 @@ export function GroupInfoView() {
             {error}
           </p>
         )}
+
+        {/* Description, like WhatsApp: admins write it; everyone sees it and who made the group. */}
+        <section className="bg-surface flex flex-col gap-2 rounded-3xl p-4">
+          {editingDescription !== null ? (
+            <form onSubmit={saveDescription} className="flex flex-col gap-2">
+              <label htmlFor="group-description" className="text-[15px] font-semibold">
+                Group description
+              </label>
+              <textarea
+                id="group-description"
+                value={editingDescription}
+                onChange={(e) => setEditingDescription(e.target.value)}
+                maxLength={MAX_GROUP_DESCRIPTION_LENGTH}
+                rows={4}
+                autoFocus
+                placeholder="What is this group for? E.g. meeting times, rules, links."
+                className="border-border bg-background focus-visible:outline-brand w-full rounded-xl border px-3 py-2 text-base focus-visible:outline-2"
+              />
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-muted text-xs tabular-nums">
+                  {editingDescription.length}/{MAX_GROUP_DESCRIPTION_LENGTH}
+                </span>
+                <span className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingDescription(null)}
+                    className="text-muted h-10 rounded-xl px-3 text-[15px] font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={busy}
+                    className="bg-brand text-brand-foreground h-10 rounded-xl px-4 text-[15px] font-semibold disabled:opacity-60"
+                  >
+                    Save
+                  </button>
+                </span>
+              </div>
+            </form>
+          ) : group.description ? (
+            <>
+              <p className="text-[15px] break-words whitespace-pre-line">{group.description}</p>
+              {admin && (
+                <button
+                  type="button"
+                  onClick={() => setEditingDescription(group.description)}
+                  className="text-brand self-start text-[15px] font-medium"
+                >
+                  Edit description
+                </button>
+              )}
+            </>
+          ) : admin ? (
+            <button
+              type="button"
+              onClick={() => setEditingDescription("")}
+              className="text-brand self-start text-[15px] font-medium"
+            >
+              Add group description
+            </button>
+          ) : (
+            <p className="text-muted text-[15px]">No description yet.</p>
+          )}
+          {editingDescription === null && <p className="text-muted text-[13px]">{createdLine}</p>}
+        </section>
+
+        <GroupMedia
+          groupId={group.id}
+          messages={messages}
+          senderName={(id) => (id === me.id ? "You" : memberName(id))}
+        />
 
         <section className="flex flex-col gap-2">
           <h2 className="mx-1 text-[22px] leading-7 font-bold">
@@ -342,6 +456,16 @@ export function GroupInfoView() {
             </button>
           </div>
         </Sheet>
+      )}
+
+      {searching && (
+        <GroupSearchSheet
+          groupId={group.id}
+          groupName={group.name}
+          messages={messages}
+          senderName={(id) => (id === me.id ? "You" : memberName(id))}
+          onClose={() => setSearching(false)}
+        />
       )}
 
       {confirmLeave && (

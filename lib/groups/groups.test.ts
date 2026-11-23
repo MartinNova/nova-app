@@ -6,6 +6,7 @@ import {
   isAdmin,
   membersAfterRemoval,
   memberSummary,
+  validateGroupDescription,
   validateGroupName,
   validateNewGroup,
 } from "./groups";
@@ -14,6 +15,7 @@ const group: ChatGroup = {
   id: "g1",
   name: "Finance study group",
   photoUrl: null,
+  description: "",
   createdBy: "a",
   createdAt: "2026-11-19T08:00:00Z",
   members: [
@@ -109,5 +111,13 @@ describe("isAdmin / memberSummary", () => {
     expect(isAdmin(group, "a")).toBe(true);
     expect(isAdmin(group, "b")).toBe(false);
     expect(memberSummary(group, "b", (id) => id.toUpperCase())).toBe("A, C, You");
+  });
+});
+
+describe("validateGroupDescription", () => {
+  it("allows an empty description and up to 500 characters", () => {
+    expect(validateGroupDescription("")).toBeNull();
+    expect(validateGroupDescription("Corporate Finance study group, Tuesdays 18:00")).toBeNull();
+    expect(validateGroupDescription("x".repeat(501))).toMatch(/500/);
   });
 });
