@@ -28,7 +28,7 @@ export function Header() {
   // where the large title never fully scrolls away).
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
-    const update = () => setScrolled(window.scrollY > 8);
+    const update = () => setScrolled(window.scrollY > 1);
     update();
     window.addEventListener("scroll", update, { passive: true });
     return () => window.removeEventListener("scroll", update);
