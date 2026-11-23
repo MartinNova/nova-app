@@ -3,7 +3,7 @@
  * Pure functions, so they are tested without a database (sync.test.ts).
  */
 
-export type PersonalKind = "todos" | "timetable";
+export type PersonalKind = "todos" | "timetable" | "payments";
 
 export interface ReadPlan<T> {
   /** What the app shows. null = nothing saved yet (the service uses its empty or example data). */

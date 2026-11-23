@@ -26,15 +26,23 @@ export function relativeDay(date: string, today: string): string {
   return days > 0 ? `in ${days} days` : `${-days} days ago`;
 }
 
-/** Splits deadlines into upcoming (soonest first) and past (latest first). */
+/** Nothing left to pay (only known when the statement has amounts). */
+const settled = (d: Deadline) =>
+  d.amountEur !== undefined && Math.round((d.paidEur ?? 0) * 100) >= Math.round(d.amountEur * 100);
+
+/**
+ * Splits deadlines into upcoming (soonest first) and past (latest first).
+ * A past date that isn't fully paid stays in upcoming (overdue) until it is.
+ */
 export function splitDeadlines(
   deadlines: Deadline[],
   today: string,
 ): { upcoming: Deadline[]; past: Deadline[] } {
   const sorted = [...deadlines].sort((a, b) => a.date.localeCompare(b.date));
+  const isPast = (d: Deadline) => d.date < today && (d.amountEur === undefined || settled(d));
   return {
-    upcoming: sorted.filter((d) => d.date >= today),
-    past: sorted.filter((d) => d.date < today).reverse(),
+    upcoming: sorted.filter((d) => !isPast(d)),
+    past: sorted.filter(isPast).reverse(),
   };
 }
 

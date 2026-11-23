@@ -39,6 +39,7 @@ The header shows **Sign in** when signed out, otherwise the settings gear and yo
    20. `20261129000000_room_listing_areas.sql` (several areas per room listing, also your own under "Other")
    21. `20261130000000_message_listing.sql` (messages written from a room listing show it as a card)
    22. `20261201000000_group_description.sql` (a description in group info, set by admins)
+   23. `20261202000000_personal_payments.sql` (your imported netPA payment plan, private like the timetable)
 3. **Authentication → Sign In / Providers → Email**: enabled (default).
    - For a live demo, turn **Confirm email** off: Supabase's built-in mail server only
      sends a few e-mails per hour. With it on, new users must click a link first.

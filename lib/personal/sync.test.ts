@@ -65,4 +65,12 @@ describe("database rules for personal_data", () => {
     expect(sql).toMatch(/kind in \('todos', 'timetable'\)/);
     expect(sql).toMatch(/pg_column_size\(data\) < 1000000/);
   });
+
+  it("later also accepts the imported payment plan, and nothing else", () => {
+    const payments = readFileSync(
+      "supabase/migrations/20261202000000_personal_payments.sql",
+      "utf8",
+    );
+    expect(payments).toMatch(/kind in \('todos', 'timetable', 'payments'\)/);
+  });
 });
