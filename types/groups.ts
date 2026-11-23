@@ -5,6 +5,7 @@
 import type { Attachment, MessageFile, Reaction, SendOptions } from "./messages";
 
 export const MAX_GROUP_NAME_LENGTH = 50;
+export const MAX_GROUP_DESCRIPTION_LENGTH = 500;
 /** Including the creator. */
 export const MAX_GROUP_MEMBERS = 50;
 
@@ -24,6 +25,8 @@ export interface ChatGroup {
   name: string;
   /** Group picture (signed URL, or a data URL in demo mode); null = initials. */
   photoUrl: string | null;
+  /** What the group is for, shown in group info (like WhatsApp); empty = none. */
+  description: string;
   createdBy: string;
   /** ISO timestamp. */
   createdAt: string;
@@ -66,7 +69,10 @@ export interface GroupService {
   /** You become admin; `memberIds` are the others. `photo` is a square JPEG. */
   createGroup(userId: string, name: string, memberIds: string[], photo?: Blob): Promise<ChatGroup>;
   /** Admins only. Pass `photo: null` to remove the picture. */
-  updateGroup(groupId: string, changes: { name?: string; photo?: Blob | null }): Promise<void>;
+  updateGroup(
+    groupId: string,
+    changes: { name?: string; photo?: Blob | null; description?: string },
+  ): Promise<void>;
   /** Admins only. */
   addMembers(groupId: string, memberIds: string[]): Promise<void>;
   /** Admins remove others; anyone can remove themselves (leave). */

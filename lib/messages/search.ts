@@ -98,3 +98,25 @@ export function matchingChats<T extends { name: string }>(chats: T[], query: str
   const q = normalize(query.trim());
   return q ? chats.filter((c) => normalize(c.name).includes(q)) : [];
 }
+
+const URLS = /\b(?:https?:\/\/|www\.)[^\s<>"]+/gi;
+
+/** All links in a message, without trailing punctuation ("see https://x.pt." → "https://x.pt"). */
+export function extractLinks(text: string): string[] {
+  return (text.match(URLS) ?? []).map((url) => url.replace(/[.,;:!?)\]]+$/, ""));
+}
+
+/** "www.x.pt" needs a scheme to open as a link. */
+export const linkHref = (url: string) => (/^https?:\/\//i.test(url) ? url : `https://${url}`);
+
+/** What a chat shared, newest first, for "Media, links and docs" (like WhatsApp). */
+export function sharedMedia<T extends Pick<SearchItem, "body" | "imageUrl" | "file" | "createdAt">>(
+  items: T[],
+): { photos: T[]; files: T[]; links: { url: string; item: T }[] } {
+  const newest = [...items].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+  return {
+    photos: newest.filter((m) => m.imageUrl),
+    files: newest.filter((m) => m.file),
+    links: newest.flatMap((item) => extractLinks(item.body).map((url) => ({ url, item }))),
+  };
+}
