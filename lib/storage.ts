@@ -22,8 +22,14 @@ export function writeJSON<T>(key: string, value: T): void {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(PREFIX + key, JSON.stringify(value));
-    window.dispatchEvent(new CustomEvent(STORAGE_CHANGED, { detail: PREFIX + key }));
+    notifyChanged(key);
   } catch {
     // Storage unavailable: the app still works, the value just isn't persisted.
   }
+}
+
+/** Tells listeners on this page (e.g. the home dashboard) that saved data changed. */
+export function notifyChanged(key: string): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(STORAGE_CHANGED, { detail: PREFIX + key }));
 }

@@ -2,26 +2,26 @@ import { readJSON, writeJSON } from "@/lib/storage";
 import { parseIcs } from "@/lib/timetable/ics";
 import { validateEvent, validateLecture } from "@/lib/timetable/validation";
 import type { TimetableData, TimetableService } from "@/types/timetable";
+import { loadPersonal, savePersonal } from "./personal-data";
 
 /**
- * localStorage implementation: the timetable is personal, so it stays on this device only.
- * Swap for a Supabase version (per user) later; the UI stays the same.
+ * The timetable is personal: saved in the user's account (Supabase, see personal-data.ts),
+ * so it is the same on every device; in demo mode or signed out it stays in this browser.
  */
 const KEY = "timetable";
-const EMPTY: TimetableData = { lectures: [], calendars: [], events: [] };
 
-function load(): TimetableData {
-  const data = readJSON<TimetableData>(KEY, EMPTY);
+async function load(): Promise<TimetableData> {
+  const data = await loadPersonal<Partial<TimetableData>>("timetable", () => readJSON(KEY, null));
   // `?? []` keeps older saved data (from before a field existed) working.
   return {
-    lectures: data.lectures ?? [],
-    calendars: data.calendars ?? [],
-    events: data.events ?? [],
+    lectures: data?.lectures ?? [],
+    calendars: data?.calendars ?? [],
+    events: data?.events ?? [],
   };
 }
 
-function save(data: TimetableData): TimetableData {
-  writeJSON(KEY, data);
+async function save(data: TimetableData): Promise<TimetableData> {
+  await savePersonal("timetable", data, (value) => writeJSON(KEY, value), KEY);
   return data;
 }
 
@@ -38,17 +38,17 @@ export const timetableService: TimetableService = {
   async addLecture(input) {
     const problem = validateLecture(input);
     if (problem) throw new Error(problem);
-    const data = load();
+    const data = await load();
     return save({ ...data, lectures: [...data.lectures, { ...input, id: newId() }] });
   },
 
   async removeLecture(id) {
-    const data = load();
+    const data = await load();
     return save({ ...data, lectures: data.lectures.filter((l) => l.id !== id) });
   },
 
   async updateLecture(id, patch) {
-    const data = load();
+    const data = await load();
     return save({
       ...data,
       lectures: data.lectures.map((l) => (l.id === id ? { ...l, ...patch } : l)),
@@ -59,7 +59,7 @@ export const timetableService: TimetableService = {
     const id = newId();
     const events = parseIcs(icsText, category, id);
     if (events.length === 0) throw new Error("No events found in this file.");
-    const data = load();
+    const data = await load();
     // Re-uploading a file with the same name replaces the old version.
     const others = data.calendars.filter((c) => c.name !== name);
     return save({
@@ -69,19 +69,19 @@ export const timetableService: TimetableService = {
   },
 
   async removeCalendar(id) {
-    const data = load();
+    const data = await load();
     return save({ ...data, calendars: data.calendars.filter((c) => c.id !== id) });
   },
 
   async addEvent(input) {
     const problem = validateEvent(input);
     if (problem) throw new Error(problem);
-    const data = load();
+    const data = await load();
     return save({ ...data, events: [...data.events, { ...input, id: `event:${newId()}` }] });
   },
 
   async removeEvent(id) {
-    const data = load();
+    const data = await load();
     return save({ ...data, events: data.events.filter((e) => e.id !== id) });
   },
 };
