@@ -9,6 +9,7 @@ import { Segmented } from "@/components/transport/shared";
 import { Avatar } from "@/components/ui/Avatar";
 import { Card } from "@/components/ui/Card";
 import { friendIds, incomingRequests, otherPerson, outgoingRequests } from "@/lib/friends/friends";
+import { searchPeople } from "@/lib/friends/search";
 import { flagEmoji, studyProgress } from "@/lib/profile/profile-rules";
 import { profileService } from "@/lib/services/profile.service";
 import type { Friendship } from "@/types/friends";
@@ -19,13 +20,6 @@ import { useFriendships } from "./useFriendships";
 
 const fieldClass =
   "border-border bg-surface focus-visible:outline-brand h-10 w-full rounded-xl border px-3 text-sm focus-visible:outline-2";
-
-/** True if the profile matches the search text (name or @username). */
-function matchesSearch(p: Profile, text: string): boolean {
-  const q = text.trim().toLowerCase().replace(/^@/, "");
-  if (!q) return true;
-  return `${p.firstName} ${p.lastName} ${p.username}`.toLowerCase().includes(q);
-}
 
 type Tab = "friends" | "find";
 
@@ -109,11 +103,9 @@ export function FriendsView() {
   });
   // Until you pick a tab: your friends if you have any, otherwise "Find people".
   const activeTab: Tab = tab ?? (friends.size > 0 ? "friends" : "find");
-  const shown = others.filter(
-    (p) =>
-      matchesSearch(p, search) &&
-      (!program || p.program === program) &&
-      (!sport || p.sports.includes(sport)),
+  // Search everyone first, so "fits exactly one student ID" doesn't depend on the filters.
+  const shown = searchPeople(others, search).filter(
+    (p) => (!program || p.program === program) && (!sport || p.sports.includes(sport)),
   );
 
   if (!ready) return <div className="bg-border h-64 animate-pulse rounded-2xl" />;
@@ -224,13 +216,13 @@ export function FriendsView() {
 
           <div className="mb-4 grid gap-2">
             <label className="relative">
-              <span className="sr-only">Search by name or username</span>
+              <span className="sr-only">Search by name, username or student ID</span>
               <Search className="text-muted pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
               <input
                 type="search"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search name or @username"
+                placeholder="Name, username or student ID"
                 className={`${fieldClass} pl-9`}
               />
             </label>
@@ -276,7 +268,9 @@ export function FriendsView() {
               <p className="text-muted mt-1 text-sm">
                 {others.length === 0
                   ? "Invite your classmates to create an account."
-                  : "Try another programme or sport."}
+                  : search.trim()
+                    ? "Try a first or last name, @username or the full student ID."
+                    : "Try another programme or sport."}
               </p>
             </Card>
           ) : (
