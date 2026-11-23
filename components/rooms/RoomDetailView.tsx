@@ -13,6 +13,7 @@ import { toISODate } from "@/lib/padel/dates";
 import { formatAvailability, formatRent } from "@/lib/rooms/rooms";
 import { roomService } from "@/lib/services/rooms.service";
 import { ROOM_TYPES, type RoomListing } from "@/types/rooms";
+import { PhotoGallery } from "./PhotoGallery";
 
 type Loaded = { id: string; listing: RoomListing | null; today: string };
 
@@ -77,17 +78,7 @@ export function RoomDetailView() {
   return (
     <div className="grid grid-cols-1 gap-4">
       {listing.photos.length > 0 ? (
-        <div className="-mx-4 flex snap-x snap-mandatory gap-2 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-          {listing.photos.map((src, i) => (
-            // eslint-disable-next-line @next/next/no-img-element -- user uploads from Supabase Storage
-            <img
-              key={i}
-              src={src}
-              alt={`Photo ${i + 1} of ${listing.photos.length}`}
-              className="aspect-[4/3] w-[85%] shrink-0 snap-center rounded-2xl object-cover sm:w-[70%]"
-            />
-          ))}
-        </div>
+        <PhotoGallery variant="detail" photos={listing.photos} title={listing.title} />
       ) : (
         listing.kind === "offer" && (
           <div className="bg-brand/10 text-brand flex aspect-[16/7] items-center justify-center rounded-2xl">
