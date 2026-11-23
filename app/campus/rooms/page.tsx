@@ -1,15 +1,19 @@
 import type { Metadata } from "next";
 import { RoomsView } from "@/components/rooms/RoomsView";
-import { PageHeader } from "@/components/ui/PageHeader";
+import { HubHero } from "@/components/ui/HubHero";
 
 export const metadata: Metadata = { title: "Rooms & flats" };
 
 export default function RoomsPage() {
   return (
     <>
-      <PageHeader
+      <HubHero
         title="Rooms & flats"
-        subtitle="Find a room near campus or pass yours on when you leave."
+        tagline="Find a room near campus or pass yours on when you leave."
+        image={{
+          src: "/images/nova-campus-rooms-bedroom.png",
+          alt: "A sunlit bedroom with a laptop on the bed.",
+        }}
         backHref="/campus"
       />
       <RoomsView />
