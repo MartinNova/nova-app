@@ -5,6 +5,7 @@ import {
   filterMatches,
   joinMatch,
   leaveMatch,
+  myMatches,
   pendingRequests,
   requestToJoin,
   respondToRequest,
@@ -159,5 +160,23 @@ describe("join requests", () => {
     const left = leaveMatch(accepted, "b");
     expect(left.requests).toEqual([]);
     expect(ask(left, "b").requests?.[0].status).toBe("pending");
+  });
+});
+
+describe("myMatches", () => {
+  const pending = { id: "r", userId: "b", note: "", createdAt: "2026-11-18T10:00:00Z" };
+
+  it("lists matches you play in or asked to join, earliest first", () => {
+    const list = [
+      match({ id: "later", date: "2026-11-27", playerIds: ["a", "b"] }),
+      match({ id: "asked", date: "2026-11-25", requests: [{ ...pending, status: "pending" }] }),
+      match({ id: "other", date: "2026-11-24" }),
+    ];
+    expect(myMatches(list, "b").map((m) => m.id)).toEqual(["asked", "later"]);
+  });
+
+  it("leaves out declined requests", () => {
+    const declined = match({ requests: [{ ...pending, status: "declined" }] });
+    expect(myMatches([declined], "b")).toEqual([]);
   });
 });

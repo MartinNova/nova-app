@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarPlus } from "lucide-react";
+import { CalendarPlus, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCurrentUser } from "@/components/providers/CurrentUserProvider";
@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
 import { PLAYTOMIC_HOME } from "@/lib/padel/clubs";
-import { fromISODate, upcomingDates } from "@/lib/padel/dates";
-import { filterMatches } from "@/lib/padel/matches";
+import { firstDayWithMatch, fromISODate, upcomingDates } from "@/lib/padel/dates";
+import { filterMatches, myMatches } from "@/lib/padel/matches";
 import { padelService } from "@/lib/services/padel.service";
 import { celebrate } from "@/lib/ui/confetti";
 import { PADEL_LEVELS, freeSpots, type NewPadelMatch, type PadelMatch } from "@/types/padel";
@@ -46,7 +46,15 @@ export function PadelView() {
       .then((list) => {
         const days = upcomingDates(new Date(), DAYS_SHOWN);
         setDates(days);
-        setSelectedDate((current) => current || days[0]);
+        // Open on the first day with a match, so courts posted for later show up right away.
+        setSelectedDate(
+          (current) =>
+            current ||
+            firstDayWithMatch(
+              days,
+              list.map((m) => m.date),
+            ),
+        );
         setMatches(list);
       });
   }, [userId]);
@@ -76,6 +84,10 @@ export function PadelView() {
     return result;
   }, [levelMatches]);
   const dayMatches = levelMatches.filter((m) => m.date === selectedDate);
+  // levelMatches is sorted by date and time, so this is the earliest match after this day.
+  const nextMatch = levelMatches.find((m) => m.date > selectedDate && dates?.includes(m.date));
+  // Always visible, whatever day is picked, so you see your court days before you play.
+  const mine = userId ? myMatches(matches ?? [], userId) : [];
 
   async function run(matchId: string, action: () => Promise<unknown>, success?: string) {
     setBusyId(matchId);
@@ -174,7 +186,9 @@ export function PadelView() {
       <DayStrip dates={dates} value={selectedDate} onChange={setSelectedDate} counts={counts} />
 
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 className="font-semibold">{dayLabel}</h2>
+        <h2 id="padel-day" className="scroll-mt-24 font-semibold">
+          {dayLabel}
+        </h2>
         <label className="text-muted flex items-center gap-2 text-sm">
           Level
           <select
@@ -202,6 +216,22 @@ export function PadelView() {
         <Card className="py-8 text-center">
           <p className="font-semibold">No matches on this day</p>
           <p className="text-muted mt-1 text-sm">Booked a court? Post it and find players.</p>
+          {nextMatch && (
+            <button
+              type="button"
+              onClick={() => setSelectedDate(nextMatch.date)}
+              className="bg-brand/10 text-brand focus-visible:outline-brand mt-4 inline-flex items-center gap-1 rounded-full px-4 py-2 text-sm font-medium transition focus-visible:outline-2 active:scale-95"
+            >
+              Next match:{" "}
+              {fromISODate(nextMatch.date).toLocaleDateString("en-GB", {
+                weekday: "short",
+                day: "numeric",
+                month: "short",
+              })}{" "}
+              · {nextMatch.time}
+              <ChevronRight className="size-4" aria-hidden />
+            </button>
+          )}
         </Card>
       ) : (
         <div className="grid gap-3">
@@ -234,6 +264,58 @@ export function PadelView() {
             />
           ))}
         </div>
+      )}
+
+      {mine.length > 0 && (
+        <section aria-labelledby="your-matches" className="mt-8">
+          <h2 id="your-matches" className="mb-3 font-semibold">
+            Your matches
+          </h2>
+          <ul className="bg-surface divide-border divide-y rounded-2xl">
+            {mine.map((m) => {
+              const date = fromISODate(m.date);
+              const status =
+                m.createdBy === userId
+                  ? "You posted"
+                  : m.playerIds.includes(userId!)
+                    ? "You're in"
+                    : "Requested";
+              return (
+                <li key={m.id}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedDate(m.date);
+                      document.getElementById("padel-day")?.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    className="focus-visible:outline-brand flex w-full items-center gap-3 rounded-2xl p-3 text-left focus-visible:outline-2 active:opacity-70"
+                  >
+                    <span className="bg-brand/10 text-brand flex w-12 shrink-0 flex-col items-center rounded-xl py-1.5">
+                      <span className="text-xs">
+                        {m.date === dates[0]
+                          ? "Today"
+                          : date.toLocaleDateString("en-GB", { weekday: "short" })}
+                      </span>
+                      <span className="text-lg leading-tight font-semibold">{date.getDate()}</span>
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-semibold">
+                        {m.time} · {m.location}
+                      </span>
+                      <span className="text-muted block text-sm">
+                        {status} ·{" "}
+                        {freeSpots(m) === 0
+                          ? "Court full"
+                          : `${freeSpots(m)} ${freeSpots(m) === 1 ? "spot" : "spots"} free`}
+                      </span>
+                    </span>
+                    <ChevronRight className="text-muted size-4 shrink-0" aria-hidden />
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
       )}
     </>
   );
