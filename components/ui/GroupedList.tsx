@@ -63,10 +63,19 @@ type InputRowProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, "classNam
   label: string;
   /** Shows a clear button while there is a value. */
   onClear?: () => void;
+  /** Something in front of the text field, e.g. a calling-code picker. */
+  leading?: React.ReactNode;
 };
 
 /** An editable row: label on the left, text field on the right, as in iOS Settings. */
-export function InputRow({ icon, tone = "brand", label, onClear, ...input }: InputRowProps) {
+export function InputRow({
+  icon,
+  tone = "brand",
+  label,
+  onClear,
+  leading,
+  ...input
+}: InputRowProps) {
   const id = useId();
   const hasValue = typeof input.value === "string" && input.value !== "";
   return (
@@ -78,6 +87,7 @@ export function InputRow({ icon, tone = "brand", label, onClear, ...input }: Inp
         <label htmlFor={id} className="shrink-0 text-[17px]">
           {label}
         </label>
+        {leading}
         <input
           id={id}
           {...input}

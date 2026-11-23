@@ -1,17 +1,12 @@
 "use client";
 
-import { Camera, Phone } from "lucide-react";
+import { Camera, ChevronDown, Phone } from "lucide-react";
 import { useRef, useState } from "react";
 import { Avatar } from "@/components/ui/Avatar";
 import { GroupedList, InputRow } from "@/components/ui/GroupedList";
 import { squareAvatar } from "@/lib/profile/avatar";
-import {
-  COUNTRY_CODES,
-  countryName,
-  flagEmoji,
-  normalizePhone,
-  validatePhone,
-} from "@/lib/profile/profile-rules";
+import { DIAL_CODES, joinPhone, splitPhone } from "@/lib/profile/phone";
+import { COUNTRY_CODES, countryName, flagEmoji, validatePhone } from "@/lib/profile/profile-rules";
 import { profileService } from "@/lib/services/profile.service";
 import { PADEL_LEVELS } from "@/types/padel";
 import {
@@ -215,10 +210,19 @@ export function AboutSection({ form, set, userId }: SectionProps & { userId: str
   );
 }
 
-/** Optional mobile number, as an iOS-style grouped row. */
+/** Optional mobile number: calling code from a dropdown, then the number (iOS-style row). */
 export function ContactSection({ form, set }: SectionProps) {
+  const [initial] = useState(() => splitPhone(form.phone, form.country));
+  const [country, setCountry] = useState(initial.country);
+  const [local, setLocal] = useState(initial.local);
   const [touched, setTouched] = useState(false);
-  const error = touched ? validatePhone(normalizePhone(form.phone)) : null;
+  const error = touched ? validatePhone(form.phone) : null;
+
+  function update(nextCountry: string, nextLocal: string) {
+    setCountry(nextCountry);
+    setLocal(nextLocal);
+    set("phone", joinPhone(nextCountry, nextLocal));
+  }
 
   return (
     <div className="grid gap-2">
@@ -227,20 +231,45 @@ export function ContactSection({ form, set }: SectionProps) {
           icon={<Phone className="size-[18px]" aria-hidden />}
           tone="sport"
           label="Mobile"
+          leading={
+            <span className="has-[select:focus-visible]:outline-brand relative flex shrink-0 items-center gap-0.5 rounded-md text-[17px] has-[select:focus-visible]:outline-2">
+              <span aria-hidden>
+                {flagEmoji(country)} +{DIAL_CODES[country]}
+              </span>
+              <ChevronDown className="text-muted size-4" aria-hidden />
+              <select
+                aria-label="Country calling code"
+                value={country}
+                onChange={(e) => update(e.target.value, local)}
+                className="absolute inset-0 cursor-pointer opacity-0"
+              >
+                {COUNTRY_CODES.map((code) => (
+                  <option key={code} value={code}>
+                    {flagEmoji(code)} {countryName(code)} (+{DIAL_CODES[code]})
+                  </option>
+                ))}
+              </select>
+            </span>
+          }
           type="tel"
-          autoComplete="tel"
+          autoComplete="tel-national"
           inputMode="tel"
-          placeholder="+351 912 345 678"
-          maxLength={25}
-          value={form.phone}
-          onChange={(e) => set("phone", e.target.value)}
+          placeholder="912 345 678"
+          maxLength={20}
+          value={local}
+          onChange={(e) => update(country, e.target.value)}
           onBlur={() => {
             setTouched(true);
-            set("phone", normalizePhone(form.phone));
+            // Show what will be saved, e.g. "0151-234" -> "151 234", or a pasted +49 number split up.
+            const saved = splitPhone(form.phone, country);
+            if (form.phone) {
+              setCountry(saved.country);
+              setLocal(saved.local);
+            }
           }}
           onClear={() => {
             setTouched(false);
-            set("phone", "");
+            update(country, "");
           }}
           aria-invalid={error ? true : undefined}
           aria-describedby="phone-hint"
