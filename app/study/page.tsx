@@ -27,18 +27,18 @@ export default function StudyHubPage() {
       {/* For students who just started: one place with links, contacts and clubs. */}
       <Link
         href="/study/new-at-nova"
-        className="focus-visible:outline-brand mb-3 flex items-center gap-3 rounded-3xl bg-[#0b2a4a] p-4 text-white ring-1 ring-white/10 transition focus-visible:outline-2 active:scale-[0.98]"
+        className="focus-visible:outline-brand bg-surface active:bg-brand/5 mb-3 flex items-center gap-3 rounded-3xl p-4 transition focus-visible:outline-2 active:scale-[0.98]"
       >
-        <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[#f9a8d4] text-[#0b2a4a]">
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[#922d5a] text-white shadow-sm">
           <Compass className="size-6" aria-hidden />
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-[17px] leading-tight font-semibold">New at Nova?</span>
-          <span className="mt-0.5 block text-sm leading-snug text-white/85">
+          <span className="text-muted mt-0.5 block text-sm leading-snug">
             Your apps, who to ask and clubs to join, all in one place.
           </span>
         </span>
-        <ChevronRight className="size-5 shrink-0 text-white/80" aria-hidden />
+        <ChevronRight className="text-muted size-5 shrink-0" aria-hidden />
       </Link>
       <div className="grid grid-cols-2 gap-3">
         {STUDY_MODULES.map(({ href, label, description, icon: Icon, status }, i) => (
