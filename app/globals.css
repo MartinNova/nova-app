@@ -302,6 +302,18 @@ select:not([multiple]):not([size]) {
     mask-composite: intersect;
   }
 }
+/* The home artwork is light: it stays fully visible and only fades out at the very bottom. */
+.home-hero-art {
+  mask-image: linear-gradient(to bottom, #000 78%, transparent);
+}
+@media (min-width: 640px) {
+  .home-hero-art {
+    mask-image:
+      linear-gradient(to bottom, #000 78%, transparent),
+      linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+    mask-composite: intersect;
+  }
+}
 /* …and drifts a little slower than the page while scrolling (parallax), where supported. */
 @media (prefers-reduced-motion: no-preference) {
   @supports (animation-timeline: scroll()) {
