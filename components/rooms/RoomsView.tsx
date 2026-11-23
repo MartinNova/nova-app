@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { ArrowUpDown, Plus, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { useCurrentUser } from "@/components/providers/CurrentUserProvider";
@@ -8,22 +8,20 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
 import { toISODate } from "@/lib/padel/dates";
-import { filterListings } from "@/lib/rooms/rooms";
+import { activeFilterCount, filterListings } from "@/lib/rooms/rooms";
 import { roomService } from "@/lib/services/rooms.service";
 import {
+  ROOM_SORTS,
   type ListingKind,
   type ListingPhotos,
   type NewRoomListing,
   type RoomListing,
+  type RoomSort,
 } from "@/types/rooms";
 import { AreaPicker } from "./AreaPicker";
 import { NewListingForm } from "./NewListingForm";
+import { RoomFiltersSheet, type SheetFilter } from "./RoomFiltersSheet";
 import { RoomCard } from "./RoomCard";
-
-const BUDGETS = [400, 500, 600, 700, 800, 1000];
-
-const selectClass =
-  "border-border bg-surface text-foreground h-10 w-full rounded-xl border px-2 text-sm";
 
 const noSubscription = () => () => {};
 const readToday = () => toISODate(new Date());
@@ -38,7 +36,9 @@ export function RoomsView() {
   const [listings, setListings] = useState<RoomListing[] | null>(null);
   const [kind, setKind] = useState<ListingKind>("offer");
   const [areas, setAreas] = useState<string[]>([]);
-  const [maxRent, setMaxRent] = useState<number | undefined>(undefined);
+  const [sheetFilter, setSheetFilter] = useState<SheetFilter>({});
+  const [showFilters, setShowFilters] = useState(false);
+  const [sort, setSort] = useState<RoomSort>("newest");
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -89,7 +89,12 @@ export function RoomsView() {
     return <div className="bg-border h-64 animate-pulse rounded-2xl" aria-busy="true" />;
   }
 
-  const shown = filterListings(listings, { kind, areas, maxRent }, today);
+  const shown = filterListings(listings, { kind, areas, ...sheetFilter }, today, sort);
+  const filterCount = activeFilterCount({ kind, ...sheetFilter });
+  // Bars above the price slider: all current listings of this tab, before the other filters.
+  const rents = filterListings(listings, { kind }, today).map((l) => l.rent);
+  const countFor = (f: SheetFilter) =>
+    filterListings(listings, { kind, areas, ...f }, today).length;
 
   return (
     <div className="grid grid-cols-1 gap-4">
@@ -100,7 +105,11 @@ export function RoomsView() {
             type="button"
             role="tab"
             aria-selected={kind === k}
-            onClick={() => setKind(k)}
+            onClick={() => {
+              setKind(k);
+              // Prices of rooms and of budgets differ, so the filters start fresh per tab.
+              setSheetFilter({});
+            }}
             className={`h-9 flex-1 rounded-lg text-sm font-medium transition ${
               kind === k ? "bg-surface text-foreground shadow-sm" : "text-muted"
             }`}
@@ -124,22 +133,69 @@ export function RoomsView() {
         </Button>
       )}
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-[1fr_auto] gap-2">
         <AreaPicker value={areas} onChange={setAreas} />
-        <select
-          aria-label={kind === "offer" ? "Max. rent" : "Budget"}
-          value={maxRent ?? ""}
-          onChange={(e) => setMaxRent(e.target.value ? Number(e.target.value) : undefined)}
-          className={selectClass}
+        <button
+          type="button"
+          onClick={() => setShowFilters(true)}
+          className="border-border bg-surface text-foreground focus-visible:outline-brand relative flex h-10 items-center justify-center gap-2 rounded-xl border px-3 text-sm focus-visible:outline-2"
         >
-          <option value="">Any price</option>
-          {BUDGETS.map((b) => (
-            <option key={b} value={b}>
-              up to {b} €
-            </option>
-          ))}
-        </select>
+          <SlidersHorizontal className="text-muted size-4" aria-hidden />
+          Filters
+          {filterCount > 0 && (
+            <span className="bg-brand text-brand-foreground flex size-5 items-center justify-center rounded-full text-xs font-semibold tabular-nums">
+              {filterCount}
+            </span>
+          )}
+        </button>
       </div>
+
+      <div className="-mt-1 flex items-center justify-between gap-3">
+        <p className="text-muted text-sm tabular-nums">
+          {shown.length} {shown.length === 1 ? "listing" : "listings"}
+          {filterCount > 0 && (
+            <>
+              {" · "}
+              <button
+                type="button"
+                onClick={() => setSheetFilter({})}
+                className="text-brand font-medium"
+              >
+                Clear filters
+              </button>
+            </>
+          )}
+        </p>
+        <label className="text-muted flex items-center gap-1.5 text-sm">
+          <ArrowUpDown className="size-4" aria-hidden />
+          <span className="sr-only">Sort</span>
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as RoomSort)}
+            className="text-foreground h-8 rounded-lg bg-transparent pl-1 text-sm font-medium"
+          >
+            {(Object.entries(ROOM_SORTS) as [RoomSort, string][]).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      {showFilters && (
+        <RoomFiltersSheet
+          kind={kind}
+          value={sheetFilter}
+          rents={rents}
+          countFor={countFor}
+          onApply={(f) => {
+            setSheetFilter(f);
+            setShowFilters(false);
+          }}
+          onClose={() => setShowFilters(false)}
+        />
+      )}
 
       {error && (
         <p role="alert" className="text-sm text-red-700 dark:text-red-400">
