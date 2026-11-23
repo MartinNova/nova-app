@@ -1,9 +1,9 @@
 "use client";
 
-import { GraduationCap, ListChecks, Trophy, UtensilsCrossed } from "lucide-react";
+import { ListChecks, Trophy, UtensilsCrossed } from "lucide-react";
 import { GroupedList, ListRow } from "@/components/ui/GroupedList";
 import { FOOD_VENUES } from "@/data/food-options";
-import { startsIn } from "@/lib/home/today";
+import { YourWeek } from "./YourWeek";
 import type { Today } from "./useToday";
 
 const ICON = "size-[19px]";
@@ -13,46 +13,17 @@ export function TodayView({ today }: { today: Today | null }) {
   if (!today) {
     return (
       <div aria-busy className="flex flex-col gap-6">
-        <div className="bg-surface h-[72px] animate-pulse rounded-3xl" />
+        <YourWeek />
         <div className="bg-surface h-[168px] animate-pulse rounded-3xl" />
       </div>
     );
   }
 
-  const { lecture, matches, todos, time, status } = today;
+  const { matches, todos, status } = today;
 
   return (
     <div className="flex flex-col gap-6">
-      <GroupedList title="Up next">
-        {lecture ? (
-          <ListRow
-            href="/timetable"
-            icon={<GraduationCap className={ICON} strokeWidth={2} aria-hidden />}
-            title={lecture.title}
-            subtitle={[`${lecture.start}–${lecture.end}`, lecture.location]
-              .filter(Boolean)
-              .join(" · ")}
-            detail={
-              <span className="bg-brand/10 text-brand rounded-full px-2.5 py-1 text-[13px] font-semibold">
-                {startsIn(lecture.start!, time)}
-              </span>
-            }
-          />
-        ) : (
-          <ListRow
-            href="/timetable"
-            icon={<GraduationCap className={ICON} strokeWidth={2} aria-hidden />}
-            title={
-              status.lecture === "loading"
-                ? "Loading lectures…"
-                : status.lecture === "error"
-                  ? "Lectures unavailable"
-                  : "No more lectures today"
-            }
-            subtitle="Open your timetable"
-          />
-        )}
-      </GroupedList>
+      <YourWeek />
 
       <GroupedList title="Today on campus">
         <ListRow
