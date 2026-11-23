@@ -17,12 +17,12 @@ import type { SurfForecastDay, SurfRating } from "@/types/surf";
 import { todayInLisbon } from "@/lib/timetable/dates";
 import type { Today, SourceStatus } from "./useToday";
 
-/** Widget colours. White text passes 4.5:1 on each (brand flips to dark text in dark mode). */
+/** Homepage-only palette inspired by the NOVA Students banner. */
 export const WIDGET_TONE = {
-  ocean: "bg-ocean text-ocean-foreground",
-  brand: "bg-brand text-brand-foreground",
-  sport: "bg-[#2e7d32] text-white",
-  task: "bg-[#8a5d00] text-white",
+  ocean: "bg-[#82bce1] text-[#102d4d]",
+  brand: "bg-[#102d4d] text-white",
+  sport: "bg-[#f4772d] text-[#102d4d]",
+  task: "bg-[#c71d69] text-white",
 } as const;
 
 export const WIDGET_META: Record<WidgetId, { icon: LucideIcon; tone: keyof typeof WIDGET_TONE }> = {
@@ -158,12 +158,12 @@ function WaveLines() {
     >
       <path
         d="M0 14 C 32 4, 65 4, 97 14 S 162 24, 195 14 S 260 4, 292 14 S 357 24, 390 14 L 390 26 L 0 26 Z"
-        fill="white"
+        fill="currentColor"
         fillOpacity="0.14"
       />
       <path
         d="M0 19 C 40 11, 80 11, 120 19 S 200 27, 240 19 S 320 11, 390 19 L 390 26 L 0 26 Z"
-        fill="white"
+        fill="currentColor"
         fillOpacity="0.12"
       />
     </svg>

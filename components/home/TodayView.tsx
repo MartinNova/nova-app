@@ -3,7 +3,7 @@
 import { ListChecks, Trophy, UtensilsCrossed } from "lucide-react";
 import { GroupedList, ListRow } from "@/components/ui/GroupedList";
 import { FOOD_VENUES } from "@/data/food-options";
-import { YourWeek } from "./YourWeek";
+import "./home-visual.css";
 import type { Today } from "./useToday";
 
 const ICON = "size-[19px]";
@@ -13,7 +13,6 @@ export function TodayView({ today }: { today: Today | null }) {
   if (!today) {
     return (
       <div aria-busy className="flex flex-col gap-6">
-        <YourWeek />
         <div className="bg-surface h-[168px] animate-pulse rounded-3xl" />
       </div>
     );
@@ -22,9 +21,7 @@ export function TodayView({ today }: { today: Today | null }) {
   const { matches, todos, status } = today;
 
   return (
-    <div className="flex flex-col gap-6">
-      <YourWeek />
-
+    <div className="home-campus-icons flex flex-col gap-6">
       <GroupedList title="Today on campus">
         <ListRow
           href="/canteen"
