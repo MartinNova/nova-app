@@ -154,6 +154,8 @@ export function NewAtNova() {
                   <Phone className="size-5" aria-hidden />
                 </a>
               )}
+              {/* Keeps the e-mail buttons in one column when a contact has no phone. */}
+              {contact.email && !contact.phone && <span className="size-10 shrink-0" aria-hidden />}
             </li>
           ))}
         </ul>
