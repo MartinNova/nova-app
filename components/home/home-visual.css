@@ -1,15 +1,13 @@
 /* Scope icon-square overrides to Today on campus; shared rows stay unchanged. */
 .home-campus-icons a[href="/canteen"] > span:first-child {
-  background-color: #f4772d;
-  color: #102d4d;
+  background-color: transparent;
 }
 
 .home-campus-icons a[href="/sport/padel"] > span:first-child {
-  background-color: #c71d69;
+  background-color: #7b3fa0;
   color: #fff;
 }
 
 .home-campus-icons a[href="/study/todos"] > span:first-child {
-  background-color: #82bce1;
-  color: #102d4d;
+  background-color: transparent;
 }

@@ -19,10 +19,10 @@ import type { Today, SourceStatus } from "./useToday";
 
 /** Homepage-only palette inspired by the NOVA Students banner. */
 export const WIDGET_TONE = {
-  ocean: "bg-[#82bce1] text-[#102d4d]",
-  brand: "bg-[#102d4d] text-white",
-  sport: "bg-[#f4772d] text-[#102d4d]",
-  task: "bg-[#c71d69] text-white",
+  ocean: "bg-[#78b6d8] text-white",
+  brand: "bg-[#76b9a5] text-white",
+  sport: "bg-[#cd79a1] text-white",
+  task: "bg-[#c8a344] text-white",
 } as const;
 
 export const WIDGET_META: Record<WidgetId, { icon: LucideIcon; tone: keyof typeof WIDGET_TONE }> = {
@@ -49,7 +49,7 @@ function WidgetFrame({ id, href, label, children, decoration }: FrameProps) {
       draggable={false}
       className={`${WIDGET_TONE[tone]} focus-visible:outline-brand relative flex h-[172px] flex-col overflow-hidden rounded-[26px] px-[18px] pt-4 pb-5 transition-transform duration-200 ease-out select-none focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.97]`}
     >
-      <span className="flex items-center gap-1.5 text-[15px] font-semibold opacity-90">
+      <span className="flex items-center gap-1.5 text-[15px] font-semibold">
         <Icon className="size-[18px]" strokeWidth={2} aria-hidden />
         {label}
       </span>
@@ -72,7 +72,7 @@ function Big({ children }: { children: React.ReactNode }) {
 }
 
 function Sub({ children }: { children: React.ReactNode }) {
-  return <span className="line-clamp-2 text-[15px] leading-5 opacity-90">{children}</span>;
+  return <span className="line-clamp-2 text-[15px] leading-5">{children}</span>;
 }
 
 function Placeholder() {

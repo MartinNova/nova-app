@@ -19,10 +19,10 @@ export default function StudyHubPage() {
         title="Study Hub"
         tagline="Stay on top of your semester."
         image={{
-          src: "/images/nova-study-lecture-hall.png",
+          src: "/images/nova-study-hub-classroom.png",
           alt: "Students attending a lecture in a modern NOVA SBE lecture hall.",
         }}
-        cropTop
+        focus="object-[100%_30%]"
       />
       {/* For students who just started: one place with links, contacts and clubs. */}
       <Link

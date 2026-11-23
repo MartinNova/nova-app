@@ -12,7 +12,7 @@ export default function HomePage() {
         alt="NOVA Students illustration with students, books, sports and campus life."
         sizes="(max-width: 768px) 100vw, 672px"
         preload
-        className="mb-6 h-auto w-full rounded-3xl"
+        className="hub-hero-photo mb-6 h-auto w-full rounded-3xl"
       />
       <Greeting />
       <HomeView />
