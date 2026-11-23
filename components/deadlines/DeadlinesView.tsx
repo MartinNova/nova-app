@@ -1,12 +1,21 @@
 "use client";
 
-import { BellRing, CalendarPlus, ExternalLink } from "lucide-react";
-import { useState, useSyncExternalStore } from "react";
+import {
+  BellRing,
+  CalendarPlus,
+  CircleCheck,
+  ExternalLink,
+  FileSpreadsheet,
+  Upload,
+} from "lucide-react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCurrentUser } from "@/components/providers/CurrentUserProvider";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { CountUp } from "@/components/ui/CountUp";
-import { NETPA_FINANCE_URL, PAYMENT_DEADLINES } from "@/data/deadlines";
+import { useToast } from "@/components/ui/Toast";
+import { NETPA_FINANCE_URL } from "@/data/deadlines";
 import {
   daysUntil,
   deadlinesToIcs,
@@ -15,8 +24,11 @@ import {
   urgency,
   type Urgency,
 } from "@/lib/deadlines/deadlines";
+import { planFromRows, totalPaid } from "@/lib/deadlines/netpa";
+import { readCsvRows, readXlsxRows } from "@/lib/deadlines/xlsx";
+import { paymentService } from "@/lib/services/payments.service";
 import { formatDay, todayInLisbon } from "@/lib/timetable/dates";
-import type { Deadline } from "@/types/deadlines";
+import type { Deadline, PaymentPlan } from "@/types/deadlines";
 
 const TONE: Record<Urgency, "bad" | "medium" | "neutral"> = {
   past: "neutral",
@@ -30,12 +42,13 @@ const linkClass =
 
 const noSubscription = () => () => {};
 
-/** 3650 -> "€3,650". */
+/** 3650 -> "€3,650", 1.5 -> "€1.50". */
 const formatEur = (amount: number) =>
   new Intl.NumberFormat("en-GB", {
     style: "currency",
     currency: "EUR",
-    maximumFractionDigits: 0,
+    minimumFractionDigits: Number.isInteger(amount) ? 0 : 2,
+    maximumFractionDigits: 2,
   }).format(amount);
 
 /** Downloads an .ics file; phones offer to add the events (with reminders) to the calendar. */
@@ -54,17 +67,42 @@ function downloadIcs(deadlines: Deadline[], fileName: string) {
 
 function DeadlineRow({ deadline, today }: { deadline: Deadline; today: string }) {
   const level = urgency(deadline.date, today);
+  const amount = deadline.amountEur;
+  const paid = deadline.paidEur ?? 0;
+  const done = amount !== undefined && paid >= amount;
+  const overdue = level === "past" && !done;
   return (
     <li className="border-border flex items-center gap-3 border-b py-3 last:border-0">
       <div className="bg-brand/10 text-brand flex w-12 shrink-0 flex-col items-center rounded-xl py-1.5 leading-tight">
         <span className="text-lg font-bold">{formatDay(deadline.date, { day: "numeric" })}</span>
-        <span className="text-xs uppercase">{formatDay(deadline.date, { month: "short" })}</span>
+        <span className="text-xs">{formatDay(deadline.date, { month: "short" })}</span>
       </div>
       <div className="min-w-0 flex-1">
-        <p className={`font-semibold ${level === "past" ? "text-muted" : ""}`}>{deadline.title}</p>
-        {deadline.amountEur !== undefined && level !== "past" && (
-          <p className="text-sm font-medium">{formatEur(deadline.amountEur)}</p>
-        )}
+        <p className={`font-semibold ${done && level === "past" ? "text-muted" : ""}`}>
+          {deadline.title}
+        </p>
+        {amount !== undefined &&
+          (done ? (
+            // What you paid, and when the payment came in.
+            <p className="flex items-center gap-1 text-sm font-medium text-[#248a3d] dark:text-[#30d158]">
+              <CircleCheck className="size-4 shrink-0" aria-hidden />
+              Paid {formatEur(amount)}
+              {deadline.paidOn && (
+                <span className="text-muted font-normal">
+                  {" "}
+                  ·{" "}
+                  {formatDay(deadline.paidOn, { day: "numeric", month: "short", year: "numeric" })}
+                </span>
+              )}
+            </p>
+          ) : (
+            <p className="text-sm font-medium">
+              {formatEur(amount - paid)}
+              {paid > 0 && (
+                <span className="text-muted font-normal"> left · {formatEur(paid)} paid</span>
+              )}
+            </p>
+          ))}
         <p className="text-muted truncate text-sm">
           {[deadline.note, formatDay(deadline.date, { year: "numeric" })]
             .filter(Boolean)
@@ -72,7 +110,13 @@ function DeadlineRow({ deadline, today }: { deadline: Deadline; today: string })
         </p>
       </div>
       {level === "past" ? (
-        <Badge>Past</Badge>
+        overdue ? (
+          <Badge tone="bad">Overdue</Badge>
+        ) : (
+          <Badge>Past</Badge>
+        )
+      ) : done ? (
+        <Badge tone="good">Paid</Badge>
       ) : (
         <div className="flex shrink-0 items-center gap-1">
           <Badge tone={TONE[level]}>{relativeDay(deadline.date, today)}</Badge>
@@ -91,16 +135,135 @@ function DeadlineRow({ deadline, today }: { deadline: Deadline; today: string })
   );
 }
 
-/** Tuition instalments and fees from netPA with countdowns and calendar reminders. */
+/** Reads the picked file (Excel or CSV export from netPA) into a payment plan. */
+async function planFromFile(file: File): Promise<PaymentPlan> {
+  const rows = /\.csv$/i.test(file.name)
+    ? readCsvRows(await file.text())
+    : await readXlsxRows(await file.arrayBuffer());
+  return planFromRows(rows, file.name, new Date());
+}
+
+/**
+ * Your tuition instalments and fees with countdowns and calendar reminders. Payment plans
+ * differ per student, so everyone imports their own netPA export (like calendars in the
+ * timetable); payments in it show which due dates are paid.
+ */
 export function DeadlinesView() {
   // Today is only known in the browser: the page is prerendered at build time.
   const today = useSyncExternalStore(noSubscription, todayInLisbon, () => null);
+  const { user, ready } = useCurrentUser();
+  const toast = useToast();
   const [showPast, setShowPast] = useState(false);
+  const [loaded, setLoaded] = useState<{ userId: string; plan: PaymentPlan | null } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const userKey = user?.id ?? "guest";
 
-  if (!today) return <div className="bg-border h-64 animate-pulse rounded-2xl" />;
+  useEffect(() => {
+    if (!ready) return;
+    let cancelled = false;
+    paymentService
+      .load()
+      .catch(() => null)
+      .then((plan) => !cancelled && setLoaded({ userId: userKey, plan }));
+    return () => {
+      cancelled = true;
+    };
+  }, [ready, userKey]);
 
-  const { upcoming, past } = splitDeadlines(PAYMENT_DEADLINES, today);
-  const next = upcoming[0];
+  async function importFile(file: File | undefined) {
+    if (!file) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const plan = await paymentService.save(await planFromFile(file));
+      setLoaded({ userId: userKey, plan });
+      toast(`Imported ${plan!.deadlines.length} due dates`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not read this file.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function removePlan() {
+    if (!window.confirm("Remove your imported payment plan from the app?")) return;
+    setBusy(true);
+    try {
+      await paymentService.save(null);
+      setLoaded({ userId: userKey, plan: null });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not remove it.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const plan = loaded?.userId === userKey ? loaded.plan : undefined;
+  if (!today || plan === undefined) {
+    return <div className="bg-border h-64 animate-pulse rounded-2xl" />;
+  }
+
+  const picker = (
+    <input
+      ref={fileInput}
+      type="file"
+      accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
+      className="sr-only"
+      onChange={(e) => {
+        void importFile(e.target.files?.[0]);
+        e.target.value = "";
+      }}
+    />
+  );
+  const errorLine = error && (
+    <p role="alert" className="text-sm text-red-700 dark:text-red-400">
+      {error}
+    </p>
+  );
+
+  if (!plan) {
+    return (
+      <div className="grid grid-cols-1 gap-4">
+        <Card>
+          <p className="flex items-center gap-1.5 font-semibold">
+            <FileSpreadsheet className="text-brand size-5" aria-hidden /> Import your payment plan
+          </p>
+          <p className="text-muted mt-1 text-sm">
+            Payment plans differ per student, so the app uses yours. In netPA, open{" "}
+            <strong>Financial Situation → Current account</strong> and export it to Excel. Then
+            import the file here.
+          </p>
+          <ul className="text-muted mt-3 list-disc space-y-1 pl-5 text-sm">
+            <li>Due dates and amounts become your countdown and reminders</li>
+            <li>Payments you made show which ones are paid, and how much</li>
+          </ul>
+          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+            <Button onClick={() => fileInput.current?.click()} disabled={busy}>
+              <Upload className="size-4" aria-hidden /> {busy ? "Importing…" : "Import Excel file"}
+            </Button>
+            <a href={NETPA_FINANCE_URL} target="_blank" rel="noreferrer" className={linkClass}>
+              <ExternalLink className="size-4" aria-hidden /> Open netPA
+            </a>
+          </div>
+          {picker}
+        </Card>
+        {errorLine}
+        <p className="text-muted text-xs">
+          Only you can see your payment plan. Excel (.xlsx) and CSV work.
+        </p>
+      </div>
+    );
+  }
+
+  const { upcoming, past } = splitDeadlines(plan.deadlines, today);
+  const open = upcoming.filter(
+    (d) => !(d.amountEur !== undefined && (d.paidEur ?? 0) >= d.amountEur),
+  );
+  const next = open[0];
+  const nextLeft = next?.amountEur !== undefined ? next.amountEur - (next.paidEur ?? 0) : undefined;
+  const paidTotal = totalPaid(plan.payments);
 
   return (
     <div className="grid grid-cols-1 gap-4">
@@ -122,13 +285,13 @@ export function DeadlinesView() {
             Due {formatDay(next.date, { weekday: "long", day: "numeric", month: "long" })} ·{" "}
             <span className="font-semibold">{relativeDay(next.date, today)}</span>
           </p>
-          {next.amountEur !== undefined && (
+          {nextLeft !== undefined && (
             <p className="mt-1">
-              Amount: <span className="font-semibold">{formatEur(next.amountEur)}</span>
+              Amount: <span className="font-semibold">{formatEur(nextLeft)}</span>
             </p>
           )}
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
-            <Button onClick={() => downloadIcs(upcoming, "nova-payment-deadlines.ics")}>
+            <Button onClick={() => downloadIcs(open, "nova-payment-deadlines.ics")}>
               <CalendarPlus className="size-4" aria-hidden /> Add all reminders to calendar
             </Button>
             <a href={NETPA_FINANCE_URL} target="_blank" rel="noreferrer" className={linkClass}>
@@ -141,8 +304,8 @@ export function DeadlinesView() {
         </Card>
       ) : (
         <Card className="text-center">
-          <p className="font-semibold">No upcoming payments</p>
-          <p className="text-muted mt-1 text-sm">All known due dates are in the past.</p>
+          <p className="font-semibold">Nothing left to pay</p>
+          <p className="text-muted mt-1 text-sm">Every due date in your plan is paid.</p>
         </Card>
       )}
 
@@ -159,14 +322,22 @@ export function DeadlinesView() {
 
       {past.length > 0 && (
         <Card>
-          <button
-            type="button"
-            onClick={() => setShowPast((v) => !v)}
-            className="text-muted hover:text-foreground w-full text-left text-sm font-medium"
-            aria-expanded={showPast}
-          >
-            {showPast ? "Hide" : "Show"} past due dates ({past.length})
-          </button>
+          <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+            <button
+              type="button"
+              onClick={() => setShowPast((v) => !v)}
+              className="text-muted hover:text-foreground text-left text-sm font-medium"
+              aria-expanded={showPast}
+            >
+              {showPast ? "Hide" : "Show"} past due dates ({past.length})
+            </button>
+            {paidTotal > 0 && (
+              <span className="text-sm whitespace-nowrap">
+                <span className="text-muted">Paid so far </span>
+                <span className="font-semibold tabular-nums">{formatEur(paidTotal)}</span>
+              </span>
+            )}
+          </div>
           {showPast && (
             <ul className="mt-1">
               {past.map((d) => (
@@ -177,10 +348,35 @@ export function DeadlinesView() {
         </Card>
       )}
 
-      <p className="text-muted text-xs">
-        Due dates from netPA (Masters, 2026/27). Amounts may differ per student, so check yours in
-        netPA. Nothing about your payments is stored in this app.
-      </p>
+      {errorLine}
+      <div className="text-muted flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+        <span>
+          From {plan.fileName}, imported{" "}
+          {formatDay(plan.importedAt.slice(0, 10), {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          })}
+          . Only you can see it.
+        </span>
+        <button
+          type="button"
+          onClick={() => fileInput.current?.click()}
+          disabled={busy}
+          className="text-brand font-medium"
+        >
+          {busy ? "Importing…" : "Import newer file"}
+        </button>
+        <button
+          type="button"
+          onClick={() => void removePlan()}
+          disabled={busy}
+          className="font-medium text-red-700 dark:text-red-400"
+        >
+          Remove
+        </button>
+        {picker}
+      </div>
     </div>
   );
 }

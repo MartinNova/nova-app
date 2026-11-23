@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { PAYMENT_DEADLINES } from "@/data/deadlines";
 import { parseIcs } from "@/lib/timetable/ics";
 import type { Deadline } from "@/types/deadlines";
 import { daysUntil, deadlinesToIcs, relativeDay, splitDeadlines, urgency } from "./deadlines";
@@ -72,9 +71,17 @@ describe("deadlinesToIcs", () => {
   });
 });
 
-describe("payment deadlines data", () => {
-  it("has unique ids and valid dates", () => {
-    expect(new Set(PAYMENT_DEADLINES.map((d) => d.id)).size).toBe(PAYMENT_DEADLINES.length);
-    for (const d of PAYMENT_DEADLINES) expect(d.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+describe("splitDeadlines with payments", () => {
+  it("keeps a past date that isn't fully paid in upcoming (overdue)", () => {
+    const { upcoming, past } = splitDeadlines(
+      [
+        { ...deadline("paid", "2026-03-01"), amountEur: 100, paidEur: 100 },
+        { ...deadline("open", "2026-10-01"), amountEur: 100, paidEur: 40 },
+        { ...deadline("next", "2026-12-05"), amountEur: 3650, paidEur: 0 },
+      ],
+      "2026-11-17",
+    );
+    expect(upcoming.map((d) => d.id)).toEqual(["open", "next"]);
+    expect(past.map((d) => d.id)).toEqual(["paid"]);
   });
 });
