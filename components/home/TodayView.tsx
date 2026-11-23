@@ -2,6 +2,7 @@
 
 import { ListChecks, Trophy, UtensilsCrossed } from "lucide-react";
 import { GroupedList, ListRow } from "@/components/ui/GroupedList";
+import { TILE_COLORS } from "@/components/ui/Tile";
 import { FOOD_VENUES } from "@/data/food-options";
 import "./home-visual.css";
 import type { Today } from "./useToday";
@@ -26,7 +27,13 @@ export function TodayView({ today }: { today: Today | null }) {
         <ListRow
           href="/canteen"
           tone="food"
-          icon={<UtensilsCrossed className={ICON} strokeWidth={2} aria-hidden />}
+          icon={
+            <span
+              className={`${TILE_COLORS.orange} flex size-8 items-center justify-center rounded-lg text-white`}
+            >
+              <UtensilsCrossed className="size-6" aria-hidden />
+            </span>
+          }
           title="Food Options"
           detail={`${FOOD_VENUES.length} places`}
         />
@@ -50,7 +57,13 @@ export function TodayView({ today }: { today: Today | null }) {
         <ListRow
           href="/study/todos"
           tone="task"
-          icon={<ListChecks className={ICON} strokeWidth={2} aria-hidden />}
+          icon={
+            <span
+              className={`${TILE_COLORS.amber} flex size-8 items-center justify-center rounded-lg text-white`}
+            >
+              <ListChecks className="size-6" aria-hidden />
+            </span>
+          }
           title="To-dos due"
           detail={
             status.todos === "loading"
