@@ -49,9 +49,15 @@ export const timetableService: TimetableService = {
 
   async updateLecture(id, patch) {
     const data = await load();
+    const current = data.lectures.find((l) => l.id === id);
+    if (!current) throw new Error("This lecture no longer exists.");
+    const updated = { ...current, ...patch };
+    // Same rules as adding: a title, a weekday, an end after the start, a known term.
+    const problem = validateLecture(updated);
+    if (problem) throw new Error(problem);
     return save({
       ...data,
-      lectures: data.lectures.map((l) => (l.id === id ? { ...l, ...patch } : l)),
+      lectures: data.lectures.map((l) => (l.id === id ? updated : l)),
     });
   },
 

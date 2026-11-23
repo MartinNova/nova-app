@@ -164,7 +164,9 @@ export function WeekGrid(props: WeekGridProps) {
                       onSelectDay(day);
                       if (p.event.lectureId) onOpenLecture(p.event.lectureId);
                     }}
-                    title={`${p.event.start} ${p.event.title}`}
+                    title={[p.event.start, p.event.title, p.event.location]
+                      .filter(Boolean)
+                      .join(" · ")}
                     className={`absolute overflow-hidden rounded-md px-1 py-0.5 text-left text-[11px] leading-tight shadow-sm ${styleOf(p.event).chip}`}
                     style={{
                       top: top + 1,
@@ -175,6 +177,10 @@ export function WeekGrid(props: WeekGridProps) {
                   >
                     <span className="block font-semibold">{p.event.title}</span>
                     {height > 30 && <span className="block opacity-90">{p.event.start}</span>}
+                    {/* The room, so you see where to go without opening the lecture. */}
+                    {p.event.location && height > 44 && (
+                      <span className="block truncate opacity-90">{p.event.location}</span>
+                    )}
                   </button>
                 );
               })}

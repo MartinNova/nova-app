@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { MessageService } from "@/types/messages";
 import type { NewPadelMatch, PadelService } from "@/types/padel";
 import type { NewRoomListing, RoomService } from "@/types/rooms";
+import type { TimetableService } from "@/types/timetable";
 
 /**
  * Rejected actions through the real services (demo mode, so no network):
@@ -27,6 +28,7 @@ function memoryStorage(): Storage {
 let rooms: RoomService;
 let padel: PadelService;
 let messages: MessageService;
+let timetable: TimetableService;
 
 beforeEach(async () => {
   vi.resetModules();
@@ -37,6 +39,7 @@ beforeEach(async () => {
   ({ roomService: rooms } = await import("./rooms.service"));
   ({ padelService: padel } = await import("./padel.service"));
   ({ messageService: messages } = await import("./message.service"));
+  ({ timetableService: timetable } = await import("./timetable.service"));
 });
 
 const inDays = (days: number) => {
@@ -165,5 +168,38 @@ describe("messages: rejected actions", () => {
     expect((await messages.listMine("bob"))[0].reactions).toEqual([{ userId: "bob", emoji: "😂" }]);
     await messages.react(hi.id, "bob", null);
     expect((await messages.listMine("bob"))[0].reactions).toEqual([]);
+  });
+});
+
+describe("timetable: editing a lecture", () => {
+  const lecture = {
+    title: "Strategy",
+    weekday: 2,
+    start: "09:30",
+    end: "11:00",
+    location: "B -1.04",
+    termId: "2026-s1",
+  };
+
+  it("changes room, day and time for every week", async () => {
+    const { lectures } = await timetable.addLecture(lecture);
+    const id = lectures[0].id;
+    const after = await timetable.updateLecture(id, {
+      location: "A-101",
+      weekday: 3,
+      start: "14:00",
+      end: "15:30",
+    });
+    expect(after.lectures[0]).toMatchObject({ location: "A-101", weekday: 3, start: "14:00" });
+  });
+
+  it("refuses an end before the start and keeps the lecture as it was", async () => {
+    const { lectures } = await timetable.addLecture(lecture);
+    const id = lectures[0].id;
+    await expect(timetable.updateLecture(id, { start: "12:00", end: "11:00" })).rejects.toThrow(
+      /after start/,
+    );
+    const { lectures: stored } = await timetable.load();
+    expect(stored[0]).toMatchObject({ start: "09:30", end: "11:00" });
   });
 });
