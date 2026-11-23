@@ -29,7 +29,7 @@ export default function StudyHubPage() {
         href="/study/new-at-nova"
         className="focus-visible:outline-brand bg-surface active:bg-brand/5 mb-3 flex items-center gap-3 rounded-3xl p-4 transition focus-visible:outline-2 active:scale-[0.98]"
       >
-        <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[#922d5a] text-white shadow-sm">
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[#7b3fa0] text-white shadow-sm">
           <Compass className="size-6" aria-hidden />
         </span>
         <span className="min-w-0 flex-1">
