@@ -4,6 +4,7 @@ import { ChevronLeft } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { usePageTitle } from "@/components/providers/PageTitleProvider";
 import { APP_SHORT_NAME } from "@/lib/config/app";
 import { MAIN_NAV, labelForHref } from "@/lib/config/navigation";
@@ -14,7 +15,7 @@ const PHOTO_PAGES = ["/study", "/campus", "/sport"];
 
 /**
  * iOS-style navigation bar: "‹ Back" on the left, the small page title in the middle
- * once the large title has scrolled away, account on the right. Glass only when collapsed.
+ * once the large title has scrolled away, account on the right. Glass once the page is scrolled.
  */
 export function Header() {
   const pathname = usePathname();
@@ -23,12 +24,22 @@ export function Header() {
   // The logo sits top left on every main tab page (the others show "‹ Back" there).
   const showLogo = MAIN_NAV.some((item) => item.href === pathname);
   const collapsed = pageTitle !== null && !pageTitle.largeTitleVisible;
+  // As soon as the page is scrolled a little the bar turns to glass (also on short pages
+  // where the large title never fully scrolls away).
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const update = () => setScrolled(window.scrollY > 8);
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
+  }, [pathname]);
+  const glass = collapsed || scrolled;
   // Over a page photo the bar is see-through and its buttons float as glass capsules (iOS 26).
-  const overPhoto = Boolean(pageTitle?.immersive) && !collapsed;
+  const overPhoto = Boolean(pageTitle?.immersive) && !glass;
   const capsule = overPhoto ? "glass rounded-full shadow-sm" : "";
   const backHref = pageTitle?.backHref;
   // White over the photo; black (white in dark mode) on plain pages and once the bar turns to glass.
-  const whiteLogo = PHOTO_PAGES.includes(pathname) && !collapsed;
+  const whiteLogo = PHOTO_PAGES.includes(pathname) && !glass;
   // Main tab pages always show their own name in the middle; other pages show it once scrolled.
   const mainLabel = showLogo ? labelForHref(pathname) : null;
   const titleVisible = showLogo || collapsed;
@@ -37,7 +48,7 @@ export function Header() {
   return (
     <header
       className={`sticky top-0 z-20 pt-[env(safe-area-inset-top)] transition-colors ${
-        collapsed
+        glass
           ? "glass border-x-0 border-t-0"
           : overPhoto
             ? "border-b border-transparent bg-transparent"
