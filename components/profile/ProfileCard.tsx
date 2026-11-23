@@ -20,10 +20,12 @@ interface ProfileCardProps {
   profile: Profile;
   /** "YYYY-MM", used for "1st year" etc. */
   today: string;
+  /** Green "online" dot; false hides it (e.g. for people who aren't your friends). */
+  showOnline?: boolean;
 }
 
 /** How a student appears to others: picture, name, programme, interests. */
-export function ProfileCard({ profile: p, today }: ProfileCardProps) {
+export function ProfileCard({ profile: p, today, showOnline = true }: ProfileCardProps) {
   const { presence } = usePresence();
   const progress = studyProgress(p.studyStart, p.studyEnd, today);
   const period = [formatMonth(p.studyStart), formatMonth(p.studyEnd)].filter(Boolean).join(" – ");
@@ -37,7 +39,7 @@ export function ProfileCard({ profile: p, today }: ProfileCardProps) {
           username={p.username}
           url={p.avatarUrl}
           size={80}
-          online={presence.online.has(p.userId)}
+          online={showOnline && presence.online.has(p.userId)}
         />
         <div className="min-w-0">
           <h2 className="truncate text-xl font-bold">

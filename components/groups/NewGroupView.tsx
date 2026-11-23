@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useCurrentUser } from "@/components/providers/CurrentUserProvider";
+import { useFriendIds } from "@/components/friends/useFriendships";
 import { Card } from "@/components/ui/Card";
 import { validateNewGroup } from "@/lib/groups/groups";
 import { groupService } from "@/lib/services/group.service";
@@ -20,6 +21,7 @@ export function NewGroupView() {
   const [selected, setSelected] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const friends = useFriendIds();
 
   useEffect(() => (photo ? () => URL.revokeObjectURL(photo.url) : undefined), [photo]);
 
@@ -35,7 +37,8 @@ export function NewGroupView() {
     );
   }
 
-  const people = users.filter((u) => u.id !== user.id);
+  // Only friends can be added to a group (they don't get asked first).
+  const people = users.filter((u) => friends.has(u.id));
 
   async function create(e: React.FormEvent) {
     e.preventDefault();

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useFriendRequestCount } from "@/components/friends/useFriendships";
 import { useUnreadMessages } from "@/components/messages/useUnreadMessages";
 import { UnreadBadge } from "@/components/ui/UnreadBadge";
 import { MAIN_NAV, isActive } from "@/lib/config/navigation";
@@ -17,7 +18,9 @@ const HIDDEN_ON = ["/friends/chat", "/friends/group"];
  */
 export function BottomNav() {
   const pathname = usePathname();
+  // Friends tab badge: unread messages plus friend requests waiting for an answer.
   const unread = useUnreadMessages();
+  const requests = useFriendRequestCount();
   if (HIDDEN_ON.includes(pathname)) return null;
 
   return (
@@ -64,7 +67,9 @@ export function BottomNav() {
                 >
                   <span className="relative">
                     <Icon className="size-6" strokeWidth={active ? 2.4 : 1.8} aria-hidden />
-                    {href === "/friends" && <UnreadBadge count={unread} className="ring-0" />}
+                    {href === "/friends" && (
+                      <UnreadBadge count={unread + requests} className="ring-0" />
+                    )}
                   </span>
                   {label}
                 </Link>

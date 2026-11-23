@@ -2,8 +2,10 @@
 
 import { Check, Search, SendHorizontal } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useFriendIds } from "@/components/friends/useFriendships";
 import { GroupAvatar } from "@/components/groups/GroupAvatar";
 import { useMyGroups } from "@/components/groups/useMyGroups";
+import { useMyMessages } from "@/components/messages/useMyMessages";
 import { useCurrentUser } from "@/components/providers/CurrentUserProvider";
 import { Sheet } from "@/components/timetable/Sheet";
 import { Avatar } from "@/components/ui/Avatar";
@@ -43,6 +45,8 @@ interface ForwardSheetProps {
 export function ForwardSheet({ item, onClose, onDone }: ForwardSheetProps) {
   const { user, users } = useCurrentUser();
   const groups = useMyGroups(user?.id);
+  const messages = useMyMessages(user?.id);
+  const friends = useFriendIds();
   const [query, setQuery] = useState("");
   const [chosen, setChosen] = useState<Target[]>([]);
   const [sending, setSending] = useState(false);
@@ -55,8 +59,12 @@ export function ForwardSheet({ item, onClose, onDone }: ForwardSheetProps) {
       name: g.name,
       avatar: <GroupAvatar name={g.name} photoUrl={g.photoUrl} size={40} />,
     }));
+    // Your friends and everyone you already have a chat with.
+    const chatPartners = new Set((messages ?? []).flatMap((m) => [m.senderId, m.recipientId]));
     const userRows = users
-      .filter((u) => u.id !== user?.id && u.username)
+      .filter(
+        (u) => u.id !== user?.id && u.username && (friends.has(u.id) || chatPartners.has(u.id)),
+      )
       .map((u) => ({
         target: { kind: "user" as const, id: u.id },
         name: [u.firstName, u.lastName].filter(Boolean).join(" ") || `@${u.username}`,
@@ -72,7 +80,7 @@ export function ForwardSheet({ item, onClose, onDone }: ForwardSheetProps) {
       }))
       .sort((a, b) => a.name.localeCompare(b.name));
     return [...groupRows, ...userRows].filter((r) => !q || r.name.toLowerCase().includes(q));
-  }, [groups, users, user?.id, q]);
+  }, [groups, users, user?.id, q, friends, messages]);
 
   function toggle(target: Target) {
     setChosen((list) =>

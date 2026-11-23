@@ -8,8 +8,11 @@ import { AvailabilityList } from "@/components/profile/AvailabilityList";
 import { ProfileCard } from "@/components/profile/ProfileCard";
 import { useCurrentUser } from "@/components/providers/CurrentUserProvider";
 import { Card } from "@/components/ui/Card";
+import { relationTo } from "@/lib/friends/friends";
 import { profileService } from "@/lib/services/profile.service";
 import type { Profile } from "@/types/profile";
+import { FriendButton } from "./FriendButton";
+import { useFriendships } from "./useFriendships";
 
 type Loaded = { username: string; profile: Profile | null; today: string };
 
@@ -22,6 +25,7 @@ export function FriendProfileView() {
   const { user, ready } = useCurrentUser();
   const userId = user?.id;
   const [loaded, setLoaded] = useState<Loaded | null>(null);
+  const friendships = useFriendships(userId);
 
   useEffect(() => {
     if (!userId) return;
@@ -61,10 +65,11 @@ export function FriendProfileView() {
   }
 
   const isMe = p.userId === user.id;
+  const isFriend = relationTo(friendships ?? [], user.id, p.userId).kind === "friends";
 
   return (
     <div className="grid gap-4">
-      <ProfileCard profile={p} today={current.today} />
+      <ProfileCard profile={p} today={current.today} showOnline={isMe || isFriend} />
       <AvailabilityList profile={p} isMe={isMe} />
 
       {isMe ? (
@@ -74,9 +79,19 @@ export function FriendProfileView() {
       ) : (
         <Card className="grid gap-3">
           <p className="font-semibold">Get in touch with {p.firstName || `@${p.username}`}</p>
+          {friendships ? (
+            <FriendButton me={user.id} person={p} friendships={friendships} size="full" />
+          ) : (
+            <div className="bg-border h-11 animate-pulse rounded-xl" />
+          )}
           <Link
             href={`/friends/chat?u=${p.username}`}
-            className="bg-brand text-brand-foreground inline-flex h-11 items-center justify-center gap-2 rounded-xl px-4 font-semibold hover:opacity-90"
+            // Primary once you're friends; before that "Add friend" is the main action.
+            className={`inline-flex h-11 items-center justify-center gap-2 rounded-xl px-4 font-semibold ${
+              isFriend
+                ? "bg-brand text-brand-foreground hover:opacity-90"
+                : "border-border bg-surface hover:bg-border/40 border"
+            }`}
           >
             <MessageCircle className="size-5" aria-hidden /> Message
           </Link>
