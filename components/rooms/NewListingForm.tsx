@@ -4,11 +4,13 @@ import { ImagePlus, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { AreaPicker } from "./AreaPicker";
 import { resizePhoto } from "@/lib/rooms/photos";
-import { listingFormCopy } from "@/lib/rooms/rooms";
+import { areasToPicker, areasToSave, listingFormCopy } from "@/lib/rooms/rooms";
 import {
+  MAX_LISTING_AREAS,
   MAX_ROOM_PHOTOS,
-  ROOM_AREAS,
+  OTHER_AREA,
   ROOM_TYPES,
   type ListingKind,
   type ListingPhotos,
@@ -42,7 +44,9 @@ export function NewListingForm({ kind, today, initial, onSubmit, onClose }: NewL
   const editing = Boolean(initial);
   const [title, setTitle] = useState(initial?.title ?? "");
   const [roomType, setRoomType] = useState<RoomType>(initial?.roomType ?? "room");
-  const [area, setArea] = useState<string>(initial?.area ?? ROOM_AREAS[0]);
+  const [areaPicker] = useState(() => areasToPicker(initial?.areas ?? []));
+  const [areas, setAreas] = useState<string[]>(areaPicker.ticked);
+  const [otherArea, setOtherArea] = useState(areaPicker.other);
   const [rent, setRent] = useState(initial ? String(initial.rent) : "");
   const [billsIncluded, setBillsIncluded] = useState(initial?.billsIncluded ?? false);
   const [availableFrom, setAvailableFrom] = useState(initial?.availableFrom ?? today);
@@ -86,7 +90,7 @@ export function NewListingForm({ kind, today, initial, onSubmit, onClose }: NewL
           kind,
           title,
           roomType,
-          area,
+          areas: areasToSave(areas, otherArea),
           rent: Number(rent),
           billsIncluded,
           availableFrom,
@@ -171,16 +175,36 @@ export function NewListingForm({ kind, today, initial, onSubmit, onClose }: NewL
           Bills (water, power, internet) included
         </label>
 
-        <label className="text-sm font-medium">
-          Area
-          <select value={area} onChange={(e) => setArea(e.target.value)} className={fieldClass}>
-            {ROOM_AREAS.map((a) => (
-              <option key={a} value={a}>
-                {a}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="text-sm font-medium">
+          <span id="listing-areas">
+            {kind === "offer" ? "Area" : "Areas"}{" "}
+            <span className="text-muted font-normal">(up to {MAX_LISTING_AREAS})</span>
+          </span>
+          <div className="mt-1" aria-labelledby="listing-areas">
+            <AreaPicker
+              value={areas}
+              onChange={setAreas}
+              placeholder="Pick areas"
+              max={MAX_LISTING_AREAS}
+              label="Areas of this listing"
+            />
+          </div>
+        </div>
+
+        {areas.includes(OTHER_AREA) && (
+          <label className="fade-in text-sm font-medium">
+            Other area
+            <input
+              required
+              autoFocus={!otherArea}
+              maxLength={60}
+              value={otherArea}
+              onChange={(e) => setOtherArea(e.target.value)}
+              placeholder="e.g. Sintra"
+              className={fieldClass}
+            />
+          </label>
+        )}
 
         <div className="grid grid-cols-2 gap-3">
           <label className="text-sm font-medium">

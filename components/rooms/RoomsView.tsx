@@ -16,7 +16,7 @@ import {
   type NewRoomListing,
   type RoomListing,
 } from "@/types/rooms";
-import { AreaFilter } from "./AreaFilter";
+import { AreaPicker } from "./AreaPicker";
 import { NewListingForm } from "./NewListingForm";
 import { RoomCard } from "./RoomCard";
 
@@ -125,7 +125,7 @@ export function RoomsView() {
       )}
 
       <div className="grid grid-cols-2 gap-2">
-        <AreaFilter value={areas} onChange={setAreas} />
+        <AreaPicker value={areas} onChange={setAreas} />
         <select
           aria-label={kind === "offer" ? "Max. rent" : "Budget"}
           value={maxRent ?? ""}

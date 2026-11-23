@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
 import { toISODate } from "@/lib/padel/dates";
-import { formatAvailability, formatRent } from "@/lib/rooms/rooms";
+import { formatAreas, formatAvailability, formatRent } from "@/lib/rooms/rooms";
 import { roomService } from "@/lib/services/rooms.service";
 import {
   ROOM_TYPES,
@@ -126,7 +126,7 @@ export function RoomDetailView() {
         </div>
         <ul className="text-muted grid gap-1.5 text-sm">
           <li className="flex items-center gap-2">
-            <MapPin className="size-4 shrink-0" aria-hidden /> {listing.area}
+            <MapPin className="size-4 shrink-0" aria-hidden /> {formatAreas(listing.areas)}
           </li>
           <li className="flex items-center gap-2">
             <BedDouble className="size-4 shrink-0" aria-hidden /> {ROOM_TYPES[listing.roomType]}

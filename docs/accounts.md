@@ -36,6 +36,7 @@ The header shows **Sign in** when signed out, otherwise the settings gear and yo
    17. `20261126000000_field_privacy.sql` (who sees which profile detail: Everyone, Friends or Only me)
    18. `20261127000000_availability_slots.sql` ("Usually free" with real times per weekday)
    19. `20261128000000_room_listing_edit.sql` (edit your room listing after posting it)
+   20. `20261129000000_room_listing_areas.sql` (several areas per room listing, also your own under "Other")
 3. **Authentication → Sign In / Providers → Email**: enabled (default).
    - For a live demo, turn **Confirm email** off: Supabase's built-in mail server only
      sends a few e-mails per hour. With it on, new users must click a link first.

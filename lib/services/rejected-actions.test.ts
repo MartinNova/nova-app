@@ -49,7 +49,7 @@ const listing: NewRoomListing = {
   kind: "offer",
   title: "Room near campus",
   roomType: "room",
-  area: "Carcavelos",
+  areas: ["Carcavelos"],
   rent: 550,
   billsIncluded: true,
   availableFrom: inDays(10),

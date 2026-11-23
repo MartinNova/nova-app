@@ -10,8 +10,16 @@ import { hasSession } from "./user.service";
 const LISTINGS_KEY = "room-listings";
 const PHOTO_BUCKET = "room-photos";
 
+/** Listings saved in this browser before several areas existed have just `area`. */
+type StoredListing = RoomListing & { area?: string };
+
 function load(): RoomListing[] {
-  return readJSON<RoomListing[] | null>(LISTINGS_KEY, null) ?? createMockListings(new Date());
+  const stored = readJSON<StoredListing[] | null>(LISTINGS_KEY, null);
+  if (!stored) return createMockListings(new Date());
+  return stored.map(({ area, ...listing }) => ({
+    ...listing,
+    areas: listing.areas?.length ? listing.areas : area ? [area] : [],
+  }));
 }
 
 function toDataUrl(blob: Blob): Promise<string> {
@@ -37,6 +45,7 @@ const localRoomService: RoomService = {
     const listing: RoomListing = {
       ...input,
       title: input.title.trim(),
+      areas: cleanAreas(input.areas),
       description: input.description.trim(),
       id: crypto.randomUUID(),
       photos: await Promise.all(photos.slice(0, MAX_ROOM_PHOTOS).map(toDataUrl)),
@@ -59,6 +68,7 @@ const localRoomService: RoomService = {
       ...input,
       kind: old.kind,
       title: input.title.trim(),
+      areas: cleanAreas(input.areas),
       description: input.description.trim(),
       photos: [...photos.kept, ...added].slice(0, MAX_ROOM_PHOTOS),
     };
@@ -89,7 +99,9 @@ interface ListingRow {
   kind: RoomListing["kind"];
   title: string;
   room_type: RoomType;
+  /** First area, kept for older app versions. */
   area: string;
+  areas: string[] | null;
   rent: number;
   bills_included: boolean;
   available_from: string;
@@ -106,7 +118,7 @@ function rowToListing(row: ListingRow): RoomListing {
     kind: row.kind,
     title: row.title,
     roomType: row.room_type,
-    area: row.area,
+    areas: row.areas?.length ? row.areas : [row.area],
     rent: row.rent,
     billsIncluded: row.bills_included,
     availableFrom: row.available_from,
@@ -117,6 +129,8 @@ function rowToListing(row: ListingRow): RoomListing {
     createdAt: row.created_at,
   };
 }
+
+const cleanAreas = (areas: string[]) => areas.map((a) => a.trim()).filter(Boolean);
 
 function fail(error: { message: string }): never {
   throw new Error(error.message);
@@ -164,7 +178,8 @@ const supabaseRoomService: RoomService = {
         kind: input.kind,
         title: input.title.trim(),
         room_type: input.roomType,
-        area: input.area,
+        area: cleanAreas(input.areas)[0],
+        areas: cleanAreas(input.areas),
         rent: input.rent,
         bills_included: input.billsIncluded,
         available_from: input.availableFrom,
@@ -208,7 +223,8 @@ const supabaseRoomService: RoomService = {
       .update({
         title: input.title.trim(),
         room_type: input.roomType,
-        area: input.area,
+        area: cleanAreas(input.areas)[0],
+        areas: cleanAreas(input.areas),
         rent: input.rent,
         bills_included: input.billsIncluded,
         available_from: input.availableFrom,
