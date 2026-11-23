@@ -10,13 +10,20 @@ interface MemberPickerProps {
   people: User[];
   selected: string[];
   onChange: (selected: string[]) => void;
+  /** Shown when there's nobody to pick at all. */
+  emptyText?: string;
 }
 
 export const fullName = (u: User) =>
   [u.firstName, u.lastName].filter(Boolean).join(" ") || `@${u.username}`;
 
 /** Searchable list with round check marks, like picking contacts for a WhatsApp group. */
-export function MemberPicker({ people, selected, onChange }: MemberPickerProps) {
+export function MemberPicker({
+  people,
+  selected,
+  onChange,
+  emptyText = "Add friends first: only friends can be added to groups.",
+}: MemberPickerProps) {
   const [query, setQuery] = useState("");
   const q = query.trim().toLowerCase();
   const shown = people
@@ -46,7 +53,7 @@ export function MemberPicker({ people, selected, onChange }: MemberPickerProps) 
 
       {shown.length === 0 ? (
         <p className="text-muted py-6 text-center text-sm">
-          {people.length === 0 ? "Everyone is already in this group." : "Nobody found."}
+          {people.length === 0 ? emptyText : "Nobody found."}
         </p>
       ) : (
         <ul className="bg-surface overflow-hidden rounded-3xl">

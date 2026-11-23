@@ -17,6 +17,7 @@ import { MAX_GROUP_NAME_LENGTH, type GroupMember } from "@/types/groups";
 import type { User } from "@/types/user";
 import { GroupAvatar } from "./GroupAvatar";
 import { GroupPhotoPicker } from "./GroupPhotoPicker";
+import { useFriendIds } from "@/components/friends/useFriendships";
 import { fullName, MemberPicker } from "./MemberPicker";
 import { useGroup } from "./useGroup";
 
@@ -33,6 +34,7 @@ export function GroupInfoView() {
   const router = useRouter();
   const { user, users, ready } = useCurrentUser();
   const { presence } = usePresence();
+  const friends = useFriendIds();
   const toast = useToast();
   const { group, reload } = useGroup(groupId, user?.id);
 
@@ -74,7 +76,10 @@ export function GroupInfoView() {
       Number(b.role === "admin") - Number(a.role === "admin") ||
       memberName(a.userId).localeCompare(memberName(b.userId)),
   );
-  const notInGroup = users.filter((u) => !group.members.some((m) => m.userId === u.id));
+  // Only your friends can be added (they don't get asked first).
+  const notInGroup = users.filter(
+    (u) => friends.has(u.id) && !group.members.some((m) => m.userId === u.id),
+  );
 
   /** Runs a change, shows errors, and refreshes. */
   async function run(action: () => Promise<void>) {
@@ -313,7 +318,12 @@ export function GroupInfoView() {
       {adding && admin && (
         <Sheet title="Add people" onClose={() => setAdding(null)}>
           <div className="flex flex-col gap-4">
-            <MemberPicker people={notInGroup} selected={adding} onChange={setAdding} />
+            <MemberPicker
+              people={notInGroup}
+              selected={adding}
+              onChange={setAdding}
+              emptyText="All your friends are already in this group."
+            />
             <button
               type="button"
               disabled={busy || adding.length === 0}
