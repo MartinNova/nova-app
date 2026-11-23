@@ -72,8 +72,25 @@ export interface RoomFilter {
   kind: ListingKind;
   /** Any of these areas; empty or missing = all areas. */
   areas?: string[];
+  minRent?: number;
   maxRent?: number;
+  /** Any of these room types; empty or missing = all. */
+  roomTypes?: RoomType[];
+  /** Only listings with bills included. */
+  billsIncluded?: boolean;
+  /** Only listings with at least one photo. */
+  withPhotos?: boolean;
+  /** Only listings available on or before this day ("YYYY-MM-DD"), i.e. you can move in by then. */
+  availableBy?: string;
 }
+
+export const ROOM_SORTS = {
+  newest: "Newest first",
+  "price-asc": "Price: low to high",
+  "price-desc": "Price: high to low",
+  soonest: "Available soonest",
+} as const;
+export type RoomSort = keyof typeof ROOM_SORTS;
 
 export interface RoomService {
   listListings(): Promise<RoomListing[]>;

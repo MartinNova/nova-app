@@ -7,6 +7,7 @@ import {
   type NewRoomListing,
   type RoomFilter,
   type RoomListing,
+  type RoomSort,
 } from "@/types/rooms";
 
 const MAX_RENT = 5000;
@@ -56,18 +57,63 @@ export function listingFormCopy(kind: ListingKind) {
       };
 }
 
-/** Listings that are still relevant, matching the filter, newest first. */
+/** Listings that are still relevant and match the filter, sorted (newest first by default). */
 export function filterListings(
   listings: RoomListing[],
   filter: RoomFilter,
   today: string,
+  sort: RoomSort = "newest",
 ): RoomListing[] {
-  return listings
+  const { areas, minRent, maxRent, roomTypes, availableBy } = filter;
+  const shown = listings
     .filter((l) => l.kind === filter.kind)
     .filter((l) => !l.availableUntil || l.availableUntil >= today)
-    .filter((l) => !filter.areas?.length || l.areas.some((a) => matchesArea(a, filter.areas!)))
-    .filter((l) => filter.maxRent === undefined || l.rent <= filter.maxRent)
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    .filter((l) => !areas?.length || l.areas.some((a) => matchesArea(a, areas)))
+    .filter((l) => minRent === undefined || l.rent >= minRent)
+    .filter((l) => maxRent === undefined || l.rent <= maxRent)
+    .filter((l) => !roomTypes?.length || roomTypes.includes(l.roomType))
+    .filter((l) => !filter.billsIncluded || l.billsIncluded)
+    .filter((l) => !filter.withPhotos || l.photos.length > 0)
+    .filter((l) => !availableBy || l.availableFrom <= availableBy);
+  return sortListings(shown, sort);
+}
+
+/** Sorts a copy. Ties (same price or date) keep newest first. */
+export function sortListings(listings: RoomListing[], sort: RoomSort): RoomListing[] {
+  const newest = (a: RoomListing, b: RoomListing) => b.createdAt.localeCompare(a.createdAt);
+  const by: Record<RoomSort, (a: RoomListing, b: RoomListing) => number> = {
+    newest,
+    "price-asc": (a, b) => a.rent - b.rent || newest(a, b),
+    "price-desc": (a, b) => b.rent - a.rent || newest(a, b),
+    soonest: (a, b) => a.availableFrom.localeCompare(b.availableFrom) || newest(a, b),
+  };
+  return [...listings].sort(by[sort]);
+}
+
+/** How many of the filters in the "Filters" sheet are on (for the badge on the button). */
+export function activeFilterCount(filter: RoomFilter): number {
+  return [
+    filter.minRent !== undefined || filter.maxRent !== undefined,
+    Boolean(filter.roomTypes?.length),
+    Boolean(filter.billsIncluded),
+    Boolean(filter.withPhotos),
+    Boolean(filter.availableBy),
+  ].filter(Boolean).length;
+}
+
+/** Upper end of the price slider: the highest rent, rounded up to the next 100 (at least 500). */
+export function priceCeiling(rents: number[]): number {
+  return Math.max(500, Math.ceil(Math.max(0, ...rents) / 100) * 100);
+}
+
+/** How many listings fall into each of `buckets` equal price ranges from 0 to `ceiling`. */
+export function priceHistogram(rents: number[], ceiling: number, buckets = 30): number[] {
+  const counts = Array<number>(buckets).fill(0);
+  for (const rent of rents) {
+    const i = Math.min(buckets - 1, Math.floor((rent / ceiling) * buckets));
+    counts[Math.max(0, i)] += 1;
+  }
+  return counts;
 }
 
 const KNOWN_AREAS: readonly string[] = ROOM_AREAS;

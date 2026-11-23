@@ -1,7 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { createMockListings } from "@/data/rooms.mock";
-import { OTHER_AREA, type ListingKind, type NewRoomListing, type RoomListing } from "@/types/rooms";
 import {
+  OTHER_AREA,
+  type ListingKind,
+  type NewRoomListing,
+  type RoomFilter,
+  type RoomListing,
+  type RoomSort,
+} from "@/types/rooms";
+import {
+  activeFilterCount,
   areasLabel,
   areasToPicker,
   areasToSave,
@@ -10,6 +18,9 @@ import {
   formatAvailability,
   formatRent,
   listingFormCopy,
+  priceCeiling,
+  priceHistogram,
+  sortListings,
   validateNewListing,
 } from "./rooms";
 
@@ -186,5 +197,68 @@ describe("demo listings", () => {
   it("are valid", () => {
     for (const l of createMockListings(new Date("2026-11-17T12:00:00Z")))
       expect(validateNewListing(l, TODAY)).toBeNull();
+  });
+});
+
+describe("more filters", () => {
+  const all = [
+    listing("1", { rent: 450, roomType: "shared", billsIncluded: false }),
+    listing("2", { rent: 700, roomType: "studio", photos: ["a.jpg"] }),
+    listing("3", { rent: 900, roomType: "flat", availableFrom: "2027-03-01" }),
+  ];
+  const ids = (filter: Partial<RoomFilter>) =>
+    filterListings(all, { kind: "offer", ...filter }, TODAY)
+      .map((l) => l.id)
+      .sort();
+
+  it("price range: from and up to", () => {
+    expect(ids({ minRent: 500 })).toEqual(["2", "3"]);
+    expect(ids({ minRent: 500, maxRent: 800 })).toEqual(["2"]);
+  });
+
+  it("room types, bills, photos and move-in date", () => {
+    expect(ids({ roomTypes: ["studio", "flat"] })).toEqual(["2", "3"]);
+    expect(ids({ billsIncluded: true })).toEqual(["2", "3"]);
+    expect(ids({ withPhotos: true })).toEqual(["2"]);
+    expect(ids({ availableBy: "2027-02-01" })).toEqual(["1", "2"]);
+  });
+
+  it("counts the filters that are on", () => {
+    expect(activeFilterCount({ kind: "offer" })).toBe(0);
+    expect(
+      activeFilterCount({ kind: "offer", minRent: 300, maxRent: 600, billsIncluded: true }),
+    ).toBe(2);
+  });
+});
+
+describe("sorting", () => {
+  const all = [
+    listing("1", { rent: 700, availableFrom: "2027-02-01" }),
+    listing("2", { rent: 450, availableFrom: "2027-03-01" }),
+    listing("3", { rent: 900, availableFrom: "2027-01-15" }),
+  ];
+  const order = (sort: RoomSort) => sortListings(all, sort).map((l) => l.id);
+
+  it("newest, cheapest, most expensive, soonest", () => {
+    expect(order("newest")).toEqual(["3", "2", "1"]);
+    expect(order("price-asc")).toEqual(["2", "1", "3"]);
+    expect(order("price-desc")).toEqual(["3", "1", "2"]);
+    expect(order("soonest")).toEqual(["3", "1", "2"]);
+  });
+
+  it("does not change the list it was given", () => {
+    sortListings(all, "price-asc");
+    expect(all.map((l) => l.id)).toEqual(["1", "2", "3"]);
+  });
+});
+
+describe("price slider", () => {
+  it("ends at the highest rent, rounded up to 100", () => {
+    expect(priceCeiling([450, 1230])).toBe(1300);
+    expect(priceCeiling([])).toBe(500);
+  });
+
+  it("counts listings per price range", () => {
+    expect(priceHistogram([0, 120, 199, 950, 1000], 1000, 5)).toEqual([3, 0, 0, 0, 2]);
   });
 });
