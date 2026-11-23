@@ -41,8 +41,12 @@ export async function loadWeek(
     [
       "To-dos",
       async () => {
-        if (saved<unknown[]>("todo-todos-v2") === null) return [];
-        checkDashboardStorage(["todo-lists-v2", "todo-labels-v2"]);
+        checkDashboardStorage(["todo-todos-v2", "todo-lists-v2", "todo-labels-v2"]);
+        // Signed in, your tasks are saved in your account (Supabase), not in this browser, so
+        // an empty browser must not hide them (new device, cleared data, new account).
+        // Without an account, nothing saved yet means no tasks: never show the example ones.
+        const signedIn = mode === "accounts" && userId !== null;
+        if (!signedIn && saved<unknown[]>("todo-todos-v2") === null) return [];
         return todoWeek(await todoService.listTodos());
       },
     ],
