@@ -29,6 +29,10 @@ export function Header() {
   const backHref = pageTitle?.backHref;
   // White over the photo; black (white in dark mode) on plain pages and once the bar turns to glass.
   const whiteLogo = PHOTO_PAGES.includes(pathname) && !collapsed;
+  // Main tab pages always show their own name in the middle; other pages show it once scrolled.
+  const mainLabel = showLogo ? labelForHref(pathname) : null;
+  const titleVisible = showLogo || collapsed;
+  const centerTitle = mainLabel ?? pageTitle?.title;
 
   return (
     <header
@@ -72,13 +76,13 @@ export function Header() {
         </div>
 
         <p
-          aria-hidden={!collapsed}
+          aria-hidden={!titleVisible}
           // Takes no width until it shows, so the back label isn't cut short for long titles.
           className={`truncate text-[17px] font-semibold transition-opacity duration-200 ${
-            collapsed ? "max-w-[45vw] opacity-100" : "max-w-0 opacity-0"
-          }`}
+            whiteLogo ? "text-white drop-shadow-sm" : ""
+          } ${titleVisible ? "max-w-[45vw] opacity-100" : "max-w-0 opacity-0"}`}
         >
-          {pageTitle?.title}
+          {centerTitle}
         </p>
 
         <div className="flex justify-end">
