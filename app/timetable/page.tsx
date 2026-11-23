@@ -7,7 +7,11 @@ export const metadata: Metadata = { title: "Timetable" };
 export default function TimetablePage() {
   return (
     <>
-      <PageHeader title="Timetable" subtitle="Lectures, exams, deadlines and holidays." />
+      <PageHeader
+        title="Timetable"
+        subtitle="Lectures, exams, deadlines and holidays."
+        backHref="/study"
+      />
       <TimetableView />
     </>
   );
