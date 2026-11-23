@@ -19,7 +19,7 @@ export function TodayView({ today }: { today: Today | null }) {
     );
   }
 
-  const { lecture, matches, todos, time } = today;
+  const { lecture, matches, todos, time, status } = today;
 
   return (
     <div className="flex flex-col gap-6">
@@ -42,7 +42,13 @@ export function TodayView({ today }: { today: Today | null }) {
           <ListRow
             href="/timetable"
             icon={<GraduationCap className={ICON} strokeWidth={2} aria-hidden />}
-            title="No more lectures today"
+            title={
+              status.lecture === "loading"
+                ? "Loading lectures…"
+                : status.lecture === "error"
+                  ? "Lectures unavailable"
+                  : "No more lectures today"
+            }
             subtitle="Open your timetable"
           />
         )}
@@ -61,14 +67,32 @@ export function TodayView({ today }: { today: Today | null }) {
           tone="sport"
           icon={<Trophy className={ICON} strokeWidth={2} aria-hidden />}
           title="Padel"
-          detail={matches.length > 0 ? `${matches.length} open` : "None today"}
+          detail={
+            status.padel === "loading"
+              ? "Loading…"
+              : status.padel === "auth"
+                ? "Sign in"
+                : status.padel === "error"
+                  ? "Unavailable"
+                  : matches.length > 0
+                    ? `${matches.length} open`
+                    : "None available"
+          }
         />
         <ListRow
           href="/study/todos"
           tone="task"
           icon={<ListChecks className={ICON} strokeWidth={2} aria-hidden />}
           title="To-dos due"
-          detail={todos.length > 0 ? String(todos.length) : "All done"}
+          detail={
+            status.todos === "loading"
+              ? "Loading…"
+              : status.todos === "error"
+                ? "Unavailable"
+                : todos.length > 0
+                  ? String(todos.length)
+                  : "Nothing due"
+          }
         />
       </GroupedList>
     </div>

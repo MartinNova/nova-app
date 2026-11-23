@@ -3,12 +3,19 @@
 import { GraduationCap, ListChecks, Trophy, Waves, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { startsIn } from "@/lib/home/today";
+import {
+  forecastForToday,
+  latestRequest,
+  upcomingSurfTime,
+  watchDashboard,
+} from "@/lib/home/refresh";
+import { nowInLisbon, startsIn } from "@/lib/home/today";
 import type { WidgetId } from "@/lib/home/widgets";
 import { getSurfForecast } from "@/lib/surf/forecast";
 import { DEFAULT_SPOT_ID, getSpot } from "@/lib/surf/spots";
 import type { SurfForecastDay, SurfRating } from "@/types/surf";
-import type { Today } from "./useToday";
+import { todayInLisbon } from "@/lib/timetable/dates";
+import type { Today, SourceStatus } from "./useToday";
 
 /** Widget colours. White text passes 4.5:1 on each (brand flips to dark text in dark mode). */
 export const WIDGET_TONE = {
@@ -90,12 +97,32 @@ function SurfWidget() {
   const [state, setState] = useState<SurfState>({ status: "loading" });
   const spot = getSpot(DEFAULT_SPOT_ID)!;
 
+  const [, setTime] = useState("");
   useEffect(() => {
-    const controller = new AbortController();
-    getSurfForecast(spot, 1, controller.signal)
-      .then(({ days }) => setState(days[0] ? { status: "ok", day: days[0] } : { status: "error" }))
-      .catch(() => !controller.signal.aborted && setState({ status: "error" }));
-    return () => controller.abort();
+    let controller: AbortController | undefined;
+    const request = latestRequest<SurfForecastDay>(
+      (day) => setState({ status: "ok", day }),
+      () => setState({ status: "error" }),
+    );
+    const tick = () => setTime(nowInLisbon());
+    function reload() {
+      controller?.abort();
+      controller = new AbortController();
+      setState({ status: "loading" });
+      tick();
+      const signal = controller.signal;
+      void request.run(async () => {
+        const { days } = await getSurfForecast(spot, 1, signal);
+        return forecastForToday(days);
+      });
+    }
+    const watcher = watchDashboard(reload, tick, 15 * 60 * 1000);
+    reload();
+    return () => {
+      request.cancel();
+      controller?.abort();
+      watcher.stop();
+    };
   }, [spot]);
 
   return (
@@ -107,11 +134,12 @@ function SurfWidget() {
           <Sub>Not available right now. Tap for details.</Sub>
         </>
       )}
-      {state.status === "ok" && (
+      {state.status === "ok" && state.day.date === todayInLisbon() && (
         <>
           <Big>{state.day.conditions.waveHeightM.toFixed(1)} m</Big>
           <Sub>
-            {RATING[state.day.rating]} · best at {state.day.bestTime} ·{" "}
+            Daily avg · {RATING[state.day.rating]}
+            {upcomingSurfTime(state.day) ? ` · best at ${state.day.bestTime}` : ""} · max{" "}
             {Math.round(state.day.conditions.temperatureC)} °C
           </Sub>
         </>
@@ -142,12 +170,30 @@ function WaveLines() {
   );
 }
 
+function SourceMessage({ status }: { status: SourceStatus }) {
+  return (
+    <>
+      <span className="text-[28px] leading-[46px] font-bold">
+        {status === "auth" ? "Sign in to view" : "Unavailable"}
+      </span>
+      <Sub>
+        {status === "auth"
+          ? "Sign in to see available matches."
+          : "Could not load. Refreshes automatically."}
+      </Sub>
+    </>
+  );
+}
+
 function LectureWidget({ today }: { today: Today | null }) {
   const lecture = today?.lecture;
   return (
     <WidgetFrame id="lecture" href="/timetable" label="Next lecture">
-      {!today && <Placeholder />}
-      {today && lecture && (
+      {(!today || today.status.lecture === "loading") && <Placeholder />}
+      {today && (today.status.lecture === "error" || today.status.lecture === "auth") && (
+        <SourceMessage status={today.status.lecture} />
+      )}
+      {today && today.status.lecture === "ok" && lecture && (
         <>
           <span className="mb-1 w-fit rounded-full bg-white/20 px-2.5 py-0.5 text-[13px] font-semibold">
             {startsIn(lecture.start!, today.time)}
@@ -158,7 +204,7 @@ function LectureWidget({ today }: { today: Today | null }) {
           </Sub>
         </>
       )}
-      {today && !lecture && (
+      {today && today.status.lecture === "ok" && !lecture && (
         <>
           <span className="text-[28px] leading-[46px] font-bold">Free for today</span>
           <Sub>No more lectures. Open your timetable.</Sub>
@@ -172,8 +218,11 @@ function PadelWidget({ today }: { today: Today | null }) {
   const next = today?.matches[0];
   return (
     <WidgetFrame id="padel" href="/sport/padel" label="Padel today">
-      {!today && <Placeholder />}
-      {today && next && (
+      {(!today || today.status.padel === "loading") && <Placeholder />}
+      {today && (today.status.padel === "error" || today.status.padel === "auth") && (
+        <SourceMessage status={today.status.padel} />
+      )}
+      {today && today.status.padel === "ok" && next && (
         <>
           <Big>{today.matches.length} open</Big>
           <Sub>
@@ -182,7 +231,7 @@ function PadelWidget({ today }: { today: Today | null }) {
           </Sub>
         </>
       )}
-      {today && !next && (
+      {today && today.status.padel === "ok" && !next && (
         <>
           <span className="text-[28px] leading-[46px] font-bold">No open matches</span>
           <Sub>Start one and find players.</Sub>
@@ -196,17 +245,20 @@ function TodosWidget({ today }: { today: Today | null }) {
   const todos = today?.todos ?? [];
   return (
     <WidgetFrame id="todos" href="/study/todos" label="To-dos">
-      {!today && <Placeholder />}
-      {today && todos.length > 0 && (
+      {(!today || today.status.todos === "loading") && <Placeholder />}
+      {today && (today.status.todos === "error" || today.status.todos === "auth") && (
+        <SourceMessage status={today.status.todos} />
+      )}
+      {today && today.status.todos === "ok" && todos.length > 0 && (
         <>
           <Big>{todos.length} due</Big>
           <Sub>{todos.map((t) => t.title).join(" · ")}</Sub>
         </>
       )}
-      {today && todos.length === 0 && (
+      {today && today.status.todos === "ok" && todos.length === 0 && (
         <>
-          <span className="text-[28px] leading-[46px] font-bold">All done</span>
-          <Sub>Nothing due today.</Sub>
+          <span className="text-[28px] leading-[46px] font-bold">Nothing due</span>
+          <Sub>No unfinished tasks due today or overdue.</Sub>
         </>
       )}
     </WidgetFrame>
