@@ -37,8 +37,8 @@ export function NewGroupView() {
     );
   }
 
-  // Only friends can be added to a group (they don't get asked first).
-  const people = users.filter((u) => friends.has(u.id));
+  // Anyone on the app can be added; your friends are listed first.
+  const people = users.filter((u) => u.id !== user.id);
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
@@ -89,7 +89,12 @@ export function NewGroupView() {
             <span className="text-muted text-[15px] font-medium">{selected.length} selected</span>
           )}
         </h2>
-        <MemberPicker people={people} selected={selected} onChange={setSelected} />
+        <MemberPicker
+          people={people}
+          friendIds={friends}
+          selected={selected}
+          onChange={setSelected}
+        />
       </section>
 
       {error && (
