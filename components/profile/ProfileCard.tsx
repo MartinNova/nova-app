@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarClock, GraduationCap, IdCard, Languages } from "lucide-react";
+import { GraduationCap, IdCard, Languages } from "lucide-react";
 import Image from "next/image";
 import { usePresence } from "@/components/providers/PresenceProvider";
 import { Avatar } from "@/components/ui/Avatar";
@@ -83,28 +83,15 @@ export function ProfileCard({ profile: p, today }: ProfileCardProps) {
         </div>
       )}
 
-      {(p.languages.length > 0 || p.availabilityDays.length > 0) && (
+      {/* Free days and times are shown below the card (AvailabilityList). */}
+      {p.languages.length > 0 && (
         <dl className="text-muted grid gap-2 text-sm">
-          {p.languages.length > 0 && (
-            <div className="flex gap-2">
-              <dt>
-                <Languages className="size-4" aria-label="Languages" />
-              </dt>
-              <dd>{p.languages.join(", ")}</dd>
-            </div>
-          )}
-          {p.availabilityDays.length > 0 && (
-            <div className="flex gap-2">
-              <dt>
-                <CalendarClock className="size-4" aria-label="Usually free" />
-              </dt>
-              <dd>
-                {p.availabilityDays.join(", ")}
-                {p.availabilityTimes.length > 0 &&
-                  ` · ${p.availabilityTimes.join(", ").toLowerCase()}`}
-              </dd>
-            </div>
-          )}
+          <div className="flex gap-2">
+            <dt>
+              <Languages className="size-4" aria-label="Languages" />
+            </dt>
+            <dd>{p.languages.join(", ")}</dd>
+          </div>
         </dl>
       )}
 
