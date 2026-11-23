@@ -190,26 +190,6 @@ export function TimetableView() {
             </Card>
           )}
 
-          {upcoming.length > 0 && (
-            <section aria-label="Coming up" className="mb-5">
-              <h2 className="text-muted mb-2 text-sm font-semibold tracking-wide uppercase">
-                Coming up
-              </h2>
-              <div className="space-y-1.5">
-                {upcoming.map((event) => (
-                  <div key={event.id}>
-                    <p className="text-muted mb-0.5 text-xs">
-                      {formatDay(event.date, { weekday: "short", day: "numeric", month: "short" })}
-                    </p>
-                    <ul>
-                      <EventRow event={event} style={styleOf(event)} />
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
           <CategoryFilter visible={visible} onToggle={toggle} />
           {data.lectures.length > 0 && (
             <CourseColorToggle on={byCourse} onToggle={toggleByCourse} />
@@ -253,9 +233,28 @@ export function TimetableView() {
             onRemove={handlers.onRemoveEvent}
             onOpenLecture={setOpenLectureId}
           />
+          {/* Below the calendar: the next exams and deadlines. */}
+          {upcoming.length > 0 && (
+            <section aria-label="Coming up" className="mt-6">
+              <h2 className="text-muted mb-2 text-sm font-semibold">Coming up</h2>
+              <div className="space-y-1.5">
+                {upcoming.map((event) => (
+                  <div key={event.id}>
+                    <p className="text-muted mb-0.5 text-xs">
+                      {formatDay(event.date, { weekday: "short", day: "numeric", month: "short" })}
+                    </p>
+                    <ul>
+                      <EventRow event={event} style={styleOf(event)} />
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
           <p className="text-muted mt-5 text-xs">
-            Your timetable is stored on this device only. Lectures follow the Nova SBE academic
-            calendar 2026/27 and are skipped on Portuguese public holidays.
+            Only you can see your timetable. Lectures follow the Nova SBE academic calendar 2026/27
+            and are skipped on Portuguese public holidays.
           </p>
         </>
       )}

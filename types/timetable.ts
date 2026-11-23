@@ -46,8 +46,8 @@ export interface Lecture {
 
 export type NewLecture = Omit<Lecture, "id">;
 
-/** Fields of a lecture that can be edited later in its detail sheet. */
-export type LecturePatch = Partial<Pick<Lecture, "moodleUrl" | "notes" | "location" | "color">>;
+/** Fields of a lecture that can be edited later in its detail sheet (everything but the id). */
+export type LecturePatch = Partial<Omit<Lecture, "id">>;
 
 /** One entry in the timetable (lecture occurrence, exam, deadline or holiday). */
 export interface TimetableEvent {
