@@ -33,7 +33,11 @@ export function Header() {
             : "bg-background border-b border-transparent"
       }`}
     >
-      <div className="mx-auto grid h-12 max-w-2xl grid-cols-[1fr_auto_1fr] items-center gap-2 px-2">
+      {/* Over a photo the capsules sit a little lower, so they float instead of touching the top edge.
+          A transform, so the bar keeps its height and the photo underneath doesn't move. */}
+      <div
+        className={`mx-auto grid h-12 max-w-2xl grid-cols-[1fr_auto_1fr] items-center gap-2 px-2 transition-transform duration-200 ${overPhoto ? "translate-y-2" : ""}`}
+      >
         <div className="flex min-w-0 items-center">
           {backHref ? (
             <Link
