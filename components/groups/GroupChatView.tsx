@@ -23,7 +23,10 @@ import { useGroup } from "./useGroup";
 
 /** A group chat (?id=…): sender names above bubbles, pictures, files and @mentions, live. */
 export function GroupChatView() {
-  const groupId = useSearchParams().get("id") ?? "";
+  const params = useSearchParams();
+  const groupId = params.get("id") ?? "";
+  // Opened from search in Messages: jump to this message.
+  const focusId = params.get("m");
   const { user, users, ready } = useCurrentUser();
   const { presence, setTyping } = usePresence();
   const userId = user?.id;
@@ -169,6 +172,7 @@ export function GroupChatView() {
             onReply={(item) => setReplyTo(messages.find((m) => m.id === item.id) ?? null)}
             onDelete={remove}
             senderOf={(id) => users.find((u) => u.id === id)}
+            focusId={focusId}
           />
         )}
 

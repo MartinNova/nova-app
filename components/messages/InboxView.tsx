@@ -2,6 +2,7 @@
 
 import { MessageCircle } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 import { GroupAvatar } from "@/components/groups/GroupAvatar";
 import { useMyGroups } from "@/components/groups/useMyGroups";
 import { useCurrentUser } from "@/components/providers/CurrentUserProvider";
@@ -15,7 +16,9 @@ import {
   groupConversations,
   messagePreview,
 } from "@/lib/messages/messages";
+import type { SearchFilter, SearchItem } from "@/lib/messages/search";
 import { isTypingToMe, typingInGroup, typingLabel } from "@/lib/presence/presence";
+import { MessageSearchBar, MessageSearchResults } from "./MessageSearch";
 import { useMyMessages } from "./useMyMessages";
 
 interface InboxRow {
@@ -37,6 +40,8 @@ export function InboxView() {
   const messages = useMyMessages(user?.id);
   const groups = useMyGroups(user?.id);
   const { presence } = usePresence();
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<SearchFilter>("all");
 
   if (ready && !user) {
     return (
@@ -110,9 +115,50 @@ export function InboxView() {
   const rows = [...direct, ...grouped].sort((a, b) => Date.parse(b.time) - Date.parse(a.time));
   const now = new Date();
 
+  // Search: every message the inbox already has (your latest direct and group messages).
+  const searching = Boolean(query.trim()) || filter !== "all";
+  const usernameOf = (id: string) => users.find((u) => u.id === id)?.username;
+  const searchItems: SearchItem[] = searching
+    ? [
+        ...messages.map((m) => {
+          const otherId = m.senderId === user.id ? m.recipientId : m.senderId;
+          return {
+            ...m,
+            chat: {
+              kind: "direct" as const,
+              id: usernameOf(otherId) ?? "",
+              name: direct.find((r) => r.key === `u:${otherId}`)?.name ?? "Student",
+            },
+          };
+        }),
+        ...groups.messages.flatMap((m) => {
+          const group = groups.groups.find((g) => g.id === m.groupId);
+          return group
+            ? [{ ...m, chat: { kind: "group" as const, id: group.id, name: group.name } }]
+            : [];
+        }),
+      ]
+    : [];
+  const hrefFor = (item: SearchItem) =>
+    item.chat.kind === "group"
+      ? `/friends/group?id=${item.chat.id}&m=${item.id}`
+      : `/friends/chat?u=${item.chat.id}&m=${item.id}`;
+
   return (
     <div className="flex flex-col gap-4">
-      {rows.length === 0 ? (
+      {rows.length > 0 && (
+        <MessageSearchBar query={query} filter={filter} onQuery={setQuery} onFilter={setFilter} />
+      )}
+      {searching ? (
+        <MessageSearchResults
+          query={query}
+          filter={filter}
+          chats={rows}
+          items={searchItems}
+          senderName={firstName}
+          hrefFor={hrefFor}
+        />
+      ) : rows.length === 0 ? (
         <Card className="flex flex-col items-center gap-3 py-10 text-center">
           <span className="bg-brand text-brand-foreground flex size-14 items-center justify-center rounded-2xl">
             <MessageCircle className="size-7" aria-hidden />
