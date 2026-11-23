@@ -15,7 +15,7 @@ export function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="border-border bg-surface grid gap-4 rounded-2xl border p-4 shadow-sm">
+    <section className="border-border bg-surface grid grid-cols-1 gap-4 rounded-2xl border p-4 shadow-sm">
       <div>
         <h2 className="font-semibold">{title}</h2>
         {description && <p className="text-muted text-sm">{description}</p>}

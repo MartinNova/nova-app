@@ -56,8 +56,8 @@ function SettingsForm({ profile, onSaved }: { profile: Profile; onSaved: () => P
   }
 
   return (
-    <div className="grid gap-4">
-      <form onSubmit={handleSubmit} className="grid gap-4">
+    <div className="grid grid-cols-1 gap-4">
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
         <AboutSection form={form} set={set} userId={profile.userId} />
         <ContactSection form={form} set={set} />
         <StudySection form={form} set={set} />

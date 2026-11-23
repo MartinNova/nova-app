@@ -21,8 +21,9 @@ const DAY_NAMES: Record<Weekday, string> = {
   Sun: "Sunday",
 };
 
+// min-w-0 + no clock icon below 360px: two times and the remove button fit on a 320px phone.
 const timeClass =
-  "bg-border/50 focus-visible:outline-brand rounded-lg px-2 py-1 text-[17px] tabular-nums focus-visible:outline-2 aria-invalid:text-red-700 dark:aria-invalid:text-red-400";
+  "bg-border/50 focus-visible:outline-brand min-w-0 rounded-lg px-2 py-1 text-[17px] tabular-nums max-[359px]:[&::-webkit-calendar-picker-indicator]:hidden focus-visible:outline-2 aria-invalid:text-red-700 dark:aria-invalid:text-red-400";
 
 interface AvailabilitySectionProps {
   form: ProfileUpdate;
@@ -51,7 +52,7 @@ export function AvailabilitySection({ form, set }: AvailabilitySectionProps) {
     save([...slots, { day, ...nextSlot(ofDay(day).map((w) => w.slot)) }]);
 
   return (
-    <div className="grid gap-2">
+    <div className="grid grid-cols-1 gap-2">
       <GroupedList title="Usually free">
         {WEEKDAYS.map((day) => {
           const windows = ofDay(day);
@@ -74,7 +75,7 @@ export function AvailabilitySection({ form, set }: AvailabilitySectionProps) {
               </div>
 
               {on && (
-                <div className="border-border grid gap-1 border-b pr-3 pb-3 pl-[46px] group-last:border-b-0">
+                <div className="border-border grid grid-cols-1 gap-1 border-b pr-3 pb-3 pl-[46px] group-last:border-b-0">
                   {windows.map(({ slot, index }) => {
                     const wrong = slot.from >= slot.to;
                     return (
