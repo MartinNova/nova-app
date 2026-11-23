@@ -124,3 +124,43 @@ describe("who can see what (demo mode)", () => {
     expect(asStranger?.studentId).toBe("90001");
   });
 });
+
+describe("usually free (demo mode)", () => {
+  it("turns old day/time-of-day chips into time windows", async () => {
+    window.localStorage.setItem(
+      "campus-match:profiles",
+      JSON.stringify({
+        [ME]: { availabilityDays: ["Thu", "Fri"], availabilityTimes: ["Morning"] },
+      }),
+    );
+    expect((await profiles.getProfile(ME))?.availability).toEqual([
+      { day: "Thu", from: "08:00", to: "12:00" },
+      { day: "Fri", from: "08:00", to: "12:00" },
+    ]);
+  });
+
+  it("saves windows per day, merged, and rejects an end before the start", async () => {
+    const current: Partial<Profile> = { ...(await profiles.getProfile(ME)) };
+    delete current.userId;
+    delete current.email;
+    const base = current as ProfileUpdate;
+    const saved = await profiles.updateProfile(ME, {
+      ...base,
+      availability: [
+        { day: "Tue", from: "16:00", to: "18:00" },
+        { day: "Mon", from: "09:00", to: "11:00" },
+        { day: "Mon", from: "10:30", to: "12:00" },
+      ],
+    });
+    expect(saved.availability).toEqual([
+      { day: "Mon", from: "09:00", to: "12:00" },
+      { day: "Tue", from: "16:00", to: "18:00" },
+    ]);
+    await expect(
+      profiles.updateProfile(ME, {
+        ...base,
+        availability: [{ day: "Wed", from: "18:00", to: "09:00" }],
+      }),
+    ).rejects.toThrow(/end time/);
+  });
+});

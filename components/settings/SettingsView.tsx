@@ -9,6 +9,7 @@ import { normalizeUsername } from "@/lib/profile/profile-rules";
 import { profileService } from "@/lib/services/profile.service";
 import type { Profile, ProfileUpdate } from "@/types/profile";
 import { AccountSection } from "./AccountSection";
+import { AvailabilitySection } from "./AvailabilitySection";
 import {
   AboutSection,
   ContactSection,
@@ -61,6 +62,7 @@ function SettingsForm({ profile, onSaved }: { profile: Profile; onSaved: () => P
         <ContactSection form={form} set={set} />
         <StudySection form={form} set={set} />
         <InterestsSection form={form} set={set} />
+        <AvailabilitySection form={form} set={set} />
         <PrivacySection form={form} set={set} />
         <FieldPrivacySection form={form} set={set} />
 

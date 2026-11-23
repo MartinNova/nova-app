@@ -22,14 +22,12 @@ import { PADEL_LEVELS } from "@/types/padel";
 import {
   AUDIENCES,
   BIO_MAX_LENGTH,
-  DAY_TIMES,
   LANGUAGES,
   NOVA_PROGRAMS,
   PRIVATE_FIELDS,
   SPORT_INTERESTS,
   STUDY_STATUSES,
   VISIBILITIES,
-  WEEKDAYS,
   type PrivateField,
   type ProfileUpdate,
   type StudyStatus,
@@ -350,7 +348,7 @@ export function StudySection({ form, set }: SectionProps) {
 
 export function InterestsSection({ form, set }: SectionProps) {
   return (
-    <Section title="Sports & free time" description="Helps others find you for a game or a run.">
+    <Section title="Sports" description="Helps others find you for a game or a run.">
       <ChipGroup
         label="Sports you like"
         options={SPORT_INTERESTS}
@@ -372,18 +370,6 @@ export function InterestsSection({ form, set }: SectionProps) {
           ))}
         </select>
       </label>
-      <ChipGroup
-        label="Days you are usually free"
-        options={WEEKDAYS}
-        value={form.availabilityDays}
-        onChange={(v) => set("availabilityDays", v)}
-      />
-      <ChipGroup
-        label="Time of day"
-        options={DAY_TIMES}
-        value={form.availabilityTimes}
-        onChange={(v) => set("availabilityTimes", v)}
-      />
     </Section>
   );
 }

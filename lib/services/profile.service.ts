@@ -1,3 +1,4 @@
+import { normalizeSlots, slotsFromLegacy } from "@/lib/profile/availability";
 import {
   DEFAULT_FIELD_VISIBILITY,
   redactProfile,
@@ -20,7 +21,12 @@ import { userService } from "./user.service";
 
 const PROFILES_KEY = "profiles";
 
-/** Same clean-up for both modes before validating and saving (e.g. the phone number). */
+type LegacyAvailability = { availabilityDays?: string[]; availabilityTimes?: string[] };
+
+/**
+ * Same clean-up for both modes before validating and saving (e.g. the phone number).
+ * Free-time windows are checked as entered and only merged when saved/loaded.
+ */
 function tidy(update: ProfileUpdate): ProfileUpdate {
   return {
     ...update,
@@ -52,18 +58,25 @@ async function loadDemoProfile(userId: string): Promise<Profile | null> {
     studyStatus: "",
     sports: [],
     padelLevel: null,
-    availabilityDays: [],
-    availabilityTimes: [],
+    availability: [],
     visibility: "everyone",
     showInSuggestions: true,
     fieldVisibility: { ...DEFAULT_FIELD_VISIBILITY },
   };
-  const saved = readJSON<Record<string, Partial<ProfileUpdate>>>(PROFILES_KEY, {})[userId];
+  // Older demo saves may still have the free-time chips (availabilityDays / availabilityTimes).
+  const saved = readJSON<Record<string, Partial<ProfileUpdate> & LegacyAvailability>>(
+    PROFILES_KEY,
+    {},
+  )[userId];
+  const { availabilityDays, availabilityTimes, ...rest } = saved ?? {};
   return {
     userId,
     email: user.email ?? "",
     ...defaults,
-    ...saved,
+    ...rest,
+    availability: rest.availability
+      ? normalizeSlots(rest.availability)
+      : slotsFromLegacy(availabilityDays ?? [], availabilityTimes ?? []),
     // Profiles saved before this setting existed get the defaults.
     fieldVisibility: resolveFieldVisibility(saved?.fieldVisibility),
   };
@@ -108,7 +121,10 @@ const demoProfileService: ProfileService = {
     const error = validateProfileUpdate(update);
     if (error) throw new Error(error);
     const all = readJSON<Record<string, ProfileUpdate>>(PROFILES_KEY, {});
-    writeJSON(PROFILES_KEY, { ...all, [userId]: update });
+    writeJSON(PROFILES_KEY, {
+      ...all,
+      [userId]: { ...update, availability: normalizeSlots(update.availability) },
+    });
     return (await loadDemoProfile(userId)) as Profile;
   },
   async uploadAvatar(_userId, image) {

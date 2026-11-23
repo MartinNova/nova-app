@@ -61,6 +61,7 @@ describe("profile privacy (Everyone / Friends / Only me)", () => {
     "padel_level",
     "availability_days",
     "availability_times",
+    "availability_slots",
     "instagram",
     "linkedin",
     "phone",
@@ -74,11 +75,13 @@ describe("profile privacy (Everyone / Friends / Only me)", () => {
       }));
     const revokes = columnsOf(/revoke select \(([^)]*)\) on public\.profiles from authenticated/gi);
     const grants = columnsOf(/grant select \(([^)]*)\) on public\.profiles to authenticated/gi);
-    const last = revokes.find((r) => r.columns.includes("phone"));
-    expect(last?.columns).toEqual(expect.arrayContaining(PRIVATE_COLUMNS));
-    // ... and nothing grants them back afterwards.
-    for (const grant of grants.filter((g) => g.at > last!.at))
-      for (const column of PRIVATE_COLUMNS) expect(grant.columns).not.toContain(column);
+    // Each private column: revoked at some point, and not granted again after its last revoke.
+    for (const column of PRIVATE_COLUMNS) {
+      const lastRevoke = revokes.filter((r) => r.columns.includes(column)).at(-1);
+      expect(lastRevoke, column).toBeDefined();
+      const regranted = grants.some((g) => g.at > lastRevoke!.at && g.columns.includes(column));
+      expect(regranted, column).toBe(false);
+    }
   });
 
   it("the profile_cards view is for signed-in students only", () => {

@@ -42,8 +42,7 @@ const profile: Profile = {
   studyStatus: "regular",
   sports: ["Padel"],
   padelLevel: 3,
-  availabilityDays: ["Mon"],
-  availabilityTimes: ["Evening"],
+  availability: [{ day: "Mon", from: "18:00", to: "22:00" }],
   visibility: "everyone",
   showInSuggestions: true,
   fieldVisibility: { ...DEFAULT_FIELD_VISIBILITY },
@@ -133,8 +132,7 @@ describe("redactProfile", () => {
       program: "",
       sports: [],
       padelLevel: null,
-      availabilityDays: [],
-      availabilityTimes: [],
+      availability: [],
       instagram: "",
       linkedin: "",
       phone: "",
@@ -155,7 +153,7 @@ describe("redactProfile", () => {
     expect(seen.phone).toBe(profile.phone);
     expect(seen.avatarUrl).toBe(profile.avatarUrl);
     expect(seen.sports).toEqual(["Padel"]);
-    expect(seen.availabilityDays).toEqual(["Mon"]);
+    expect(seen.availability).toEqual(profile.availability);
     expect(seen.bio).toBe("");
     expect(seen.program).toBe("");
     expect(seen.instagram).toBe("");
