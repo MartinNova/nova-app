@@ -12,7 +12,7 @@ flowchart LR
     Components --> Services["lib/services/ — one service per module"]
     Components --> Rules["lib/module/ — pure rules (tested)"]
     Services --> Rules
-    Services --> Local[("localStorage<br/>demo mode and<br/>personal data")]
+    Services --> Local[("localStorage<br/>demo mode and<br/>signed-out guests")]
   end
   Services -- "supabase-js (HTTPS)" --> Supabase
   subgraph Supabase["Supabase (Postgres)"]
@@ -64,22 +64,23 @@ Every shared feature (rooms, messages, profiles) follows the same path:
 | **Supabase** (Postgres, Auth, Storage, Realtime)                                                | Real accounts, shared data and live updates without writing our own server                                                 | We depend on one provider; free tier limits                                                      |
 | **Security in the database (RLS)**, not only in the UI                                          | A modified client or a direct API call can't read others' chats or delete others' listings                                 | Policies are SQL and need care; checked by `lib/security/security.test.ts`                       |
 | **Data loaded in the browser** (client components)                                              | Sessions live in the browser; pages stay a static shell that loads instantly (Cache Components)                            | First load of shared data needs a request; no server-side rendering of personal data             |
-| **Personal data in localStorage** (timetable, to-dos, train settings)                           | Private by default, works offline, no extra tables                                                                         | Not synced between devices                                                                       |
+| **Personal data as one JSON document per user** (`personal_data`: timetable, to-dos)            | Same on every device; one private row per user and kind, guarded by RLS; the services' logic stays the same                | Last save wins if two devices change the same thing at the same moment; no live sync while open  |
 | **Train timetable compiled from CP's official GTFS feed** (`scripts/build-train-timetable.mjs`) | Exact times incl. holidays, no API at runtime, fast                                                                        | Needs re-running when CP changes the timetable (the app says when data runs out); no live delays |
 | **One branch + PR per feature, CI on every PR**                                                 | Clear authorship, review, nothing reaches `main` without lint, types, tests and build                                      | Merge order matters when features overlap                                                        |
 | **Pinned dependencies, few of them**                                                            | Same build everywhere; small attack surface; `npm audit` in CI                                                             | Updates are manual                                                                               |
 
 ## 4. Data and security model
 
-| Data                              | Where                                                         | Who can read                                      | Who can write                                        |
-| --------------------------------- | ------------------------------------------------------------- | ------------------------------------------------- | ---------------------------------------------------- |
-| Account, password                 | Supabase Auth (bcrypt hash)                                   | nobody (not even us)                              | the user                                             |
-| Profile                           | `profiles`                                                    | signed-in users (e-mail hidden via column grants) | only the owner                                       |
-| Profile picture                   | Storage `avatars`                                             | public URL                                        | only the owner's folder                              |
-| Padel matches, players, requests  | `padel_matches`, `padel_match_players`, `padel_join_requests` | signed-in users; requests only you + organiser    | create/cancel own; join only via an accepted request |
-| Room listings + photos            | `room_listings`, Storage `room-photos`                        | signed-in users                                   | create/delete own                                    |
-| Messages                          | `messages`                                                    | only sender and recipient                         | send as yourself; recipient may only set `read_at`   |
-| Timetable, to-dos, train settings | localStorage                                                  | this device                                       | this device                                          |
+| Data                             | Where                                                         | Who can read                                      | Who can write                                        |
+| -------------------------------- | ------------------------------------------------------------- | ------------------------------------------------- | ---------------------------------------------------- |
+| Account, password                | Supabase Auth (bcrypt hash)                                   | nobody (not even us)                              | the user                                             |
+| Profile                          | `profiles`                                                    | signed-in users (e-mail hidden via column grants) | only the owner                                       |
+| Profile picture                  | Storage `avatars`                                             | public URL                                        | only the owner's folder                              |
+| Padel matches, players, requests | `padel_matches`, `padel_match_players`, `padel_join_requests` | signed-in users; requests only you + organiser    | create/cancel own; join only via an accepted request |
+| Room listings + photos           | `room_listings`, Storage `room-photos`                        | signed-in users                                   | create/delete own                                    |
+| Messages                         | `messages`                                                    | only sender and recipient                         | send as yourself; recipient may only set `read_at`   |
+| Timetable, to-dos                | `personal_data` (one JSON row per user and kind)              | only the owner                                    | only the owner                                       |
+| Train settings                   | localStorage                                                  | this device                                       | this device                                          |
 
 - Inputs are validated three times: HTML limits (`maxLength`, `required`), the pure rule
   (friendly message), and the database (`check` constraints, RLS).
@@ -88,7 +89,9 @@ Every shared feature (rooms, messages, profiles) follows the same path:
 
 ## 5. Limits (honest list)
 
-- **Personal data doesn't sync**: timetable and to-dos live on one device.
+- **Personal data syncs on load, not live**: timetable and to-dos are saved per account, but
+  another device only shows a change when the page is opened again (the home page also refreshes
+  when you come back to it). If two devices change them at the same moment, the last save wins.
 - **No push notifications** yet; reminders go through calendar files (`.ics`).
 - **No moderation**: no report/block for listings or messages.
 - **Train data is static**: no delays; must be regenerated when the feed runs out.
@@ -102,7 +105,6 @@ Every shared feature (rooms, messages, profiles) follows the same path:
 
 | Next step                               | What changes                                                                                                                        |
 | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Sync timetable and to-dos               | New tables with the same RLS pattern; swap the localStorage service for a Supabase one; components stay the same                    |
 | Push notifications                      | Web Push (works on iPhone for home-screen apps) + a scheduled Supabase Edge Function for reminders                                  |
 | Microsoft sign-in with the Nova account | Already prepared behind `NEXT_PUBLIC_MICROSOFT_LOGIN` (see `docs/microsoft-login.md`); needs an Azure app registration from Nova IT |
 | Report and block                        | `reports` table + an admin view; hide messages from blocked users in the message policy                                             |
