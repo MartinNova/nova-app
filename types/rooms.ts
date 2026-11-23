@@ -31,6 +31,12 @@ export const ROOM_AREAS = [
   "Lisbon – other",
 ] as const;
 
+/** Last choice in the area pickers: opens a field for an area that isn't in the list. */
+export const OTHER_AREA = "Other";
+
+/** How many areas one listing can name. */
+export const MAX_LISTING_AREAS = 5;
+
 export const MAX_ROOM_PHOTOS = 4;
 
 export interface RoomListing {
@@ -38,7 +44,8 @@ export interface RoomListing {
   kind: ListingKind;
   title: string;
   roomType: RoomType;
-  area: string;
+  /** One or more areas: names from ROOM_AREAS, or your own (typed in under "Other"). */
+  areas: string[];
   /** Monthly rent in euros (for "wanted": the maximum budget). */
   rent: number;
   billsIncluded: boolean;

@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { createMockListings } from "@/data/rooms.mock";
-import type { ListingKind, NewRoomListing, RoomListing } from "@/types/rooms";
+import { OTHER_AREA, type ListingKind, type NewRoomListing, type RoomListing } from "@/types/rooms";
 import {
   areasLabel,
+  areasToPicker,
+  areasToSave,
+  formatAreas,
   filterListings,
   formatAvailability,
   formatRent,
@@ -16,7 +19,7 @@ const input: NewRoomListing = {
   kind: "offer",
   title: "Sunny room near the beach",
   roomType: "room",
-  area: "Carcavelos",
+  areas: ["Carcavelos"],
   rent: 550,
   billsIncluded: true,
   availableFrom: "2027-01-01",
@@ -75,7 +78,7 @@ describe("listingFormCopy", () => {
 
 describe("filterListings", () => {
   const all = [
-    listing("1", { area: "Cascais", rent: 700 }),
+    listing("1", { areas: ["Cascais"], rent: 700 }),
     listing("2"),
     listing("3", { kind: "wanted" }),
     listing("4", { availableUntil: "2026-10-31" }),
@@ -95,17 +98,67 @@ describe("filterListings", () => {
   });
 
   it("shows listings in any of several areas", () => {
-    const more = [...all, listing("5", { area: "Oeiras" }), listing("6", { area: "Estoril" })];
+    const more = [
+      ...all,
+      listing("5", { areas: ["Oeiras"] }),
+      listing("6", { areas: ["Estoril"] }),
+    ];
     const ids = filterListings(more, { kind: "offer", areas: ["Cascais", "Oeiras"] }, TODAY).map(
       (l) => l.id,
     );
     expect(ids.sort()).toEqual(["1", "5"]);
   });
 
+  it("a listing in several areas shows up for each of them", () => {
+    const both = [listing("7", { areas: ["Parede", "Oeiras"] })];
+    expect(filterListings(both, { kind: "offer", areas: ["Oeiras"] }, TODAY)).toHaveLength(1);
+    expect(filterListings(both, { kind: "offer", areas: ["Parede"] }, TODAY)).toHaveLength(1);
+    expect(filterListings(both, { kind: "offer", areas: ["Belém"] }, TODAY)).toHaveLength(0);
+  });
+
+  it('"Other" in the filter finds typed-in areas', () => {
+    const own = [listing("8", { areas: ["Sintra"] }), listing("9", { areas: ["Parede"] })];
+    expect(
+      filterListings(own, { kind: "offer", areas: [OTHER_AREA] }, TODAY).map((l) => l.id),
+    ).toEqual(["8"]);
+  });
+
   it("labels the area filter", () => {
     expect(areasLabel([])).toBe("All areas");
     expect(areasLabel(["Cascais"])).toBe("Cascais");
     expect(areasLabel(["Cascais", "Oeiras", "Estoril"])).toBe("Cascais +2");
+    expect(areasLabel([], "Pick areas")).toBe("Pick areas");
+  });
+});
+
+describe("areas in the form", () => {
+  it("saves the ticked areas plus the typed-in one for Other", () => {
+    expect(areasToSave(["Carcavelos", OTHER_AREA], " Sintra ")).toEqual(["Carcavelos", "Sintra"]);
+    expect(areasToSave(["Carcavelos"], "Sintra")).toEqual(["Carcavelos"]);
+    expect(areasToSave([OTHER_AREA], "")).toEqual([]);
+  });
+
+  it("fills the picker back in when editing", () => {
+    expect(areasToPicker(["Parede", "Sintra"])).toEqual({
+      ticked: ["Parede", OTHER_AREA],
+      other: "Sintra",
+    });
+    expect(areasToPicker(["Parede"])).toEqual({ ticked: ["Parede"], other: "" });
+  });
+
+  it("needs one to five areas", () => {
+    expect(validateNewListing({ ...input, areas: [] }, TODAY)).toMatch(/at least one area/);
+    expect(validateNewListing({ ...input, areas: ["  "] }, TODAY)).toMatch(/at least one area/);
+    expect(validateNewListing({ ...input, areas: ["a", "b", "c", "d", "e", "f"] }, TODAY)).toMatch(
+      /up to 5/,
+    );
+    expect(validateNewListing({ ...input, areas: ["Parede", "Oeiras"] }, TODAY)).toBeNull();
+  });
+});
+
+describe("formatAreas", () => {
+  it("lists all areas", () => {
+    expect(formatAreas(["Carcavelos", "Parede"])).toBe("Carcavelos, Parede");
   });
 });
 

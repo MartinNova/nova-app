@@ -1,4 +1,7 @@
 import {
+  MAX_LISTING_AREAS,
+  OTHER_AREA,
+  ROOM_AREAS,
   ROOM_TYPES,
   type ListingKind,
   type NewRoomListing,
@@ -16,7 +19,10 @@ export function validateNewListing(input: NewRoomListing, today: string): string
   if (title.length < 5) return "Please give your listing a title (at least 5 characters).";
   if (title.length > 80) return "The title can have at most 80 characters.";
   if (!(input.roomType in ROOM_TYPES)) return "Please pick a room type.";
-  if (!input.area.trim()) return "Please pick an area.";
+  const areas = input.areas.map((a) => a.trim()).filter(Boolean);
+  if (areas.length === 0) return "Please pick at least one area.";
+  if (areas.length > MAX_LISTING_AREAS) return `You can pick up to ${MAX_LISTING_AREAS} areas.`;
+  if (areas.some((a) => a.length > 60)) return "An area name can have at most 60 characters.";
   if (!Number.isInteger(input.rent) || input.rent < 1 || input.rent > MAX_RENT)
     return `${input.kind === "wanted" ? "Budget" : "Rent"} must be a whole number between 1 and ${MAX_RENT} €.`;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(input.availableFrom)) return "Please pick a start date.";
@@ -59,14 +65,43 @@ export function filterListings(
   return listings
     .filter((l) => l.kind === filter.kind)
     .filter((l) => !l.availableUntil || l.availableUntil >= today)
-    .filter((l) => !filter.areas?.length || filter.areas.includes(l.area))
+    .filter((l) => !filter.areas?.length || l.areas.some((a) => matchesArea(a, filter.areas!)))
     .filter((l) => filter.maxRent === undefined || l.rent <= filter.maxRent)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
+const KNOWN_AREAS: readonly string[] = ROOM_AREAS;
+
+/** Whether an area is one you typed in yourself (not from the list). */
+export const isCustomArea = (area: string) => !KNOWN_AREAS.includes(area);
+
+/** A listing's area is in the filter; "Other" in the filter catches every typed-in area. */
+function matchesArea(area: string, chosen: string[]) {
+  return chosen.includes(area) || (chosen.includes(OTHER_AREA) && isCustomArea(area));
+}
+
+/** The areas to save from the picker: ticked ones from the list, plus the typed-in one for "Other". */
+export function areasToSave(ticked: string[], other: string): string[] {
+  const own = ticked.includes(OTHER_AREA) ? other.trim() : "";
+  const list = ticked.filter((a) => a !== OTHER_AREA);
+  return own && !list.includes(own) ? [...list, own] : list;
+}
+
+/** The other way round, to fill in the picker when editing. */
+export function areasToPicker(areas: string[]): { ticked: string[]; other: string } {
+  const own = areas.filter(isCustomArea);
+  const ticked = areas.filter((a) => !isCustomArea(a));
+  return own.length
+    ? { ticked: [...ticked, OTHER_AREA], other: own.join(", ") }
+    : { ticked, other: "" };
+}
+
+/** "Carcavelos, Parede" on cards and the listing page. */
+export const formatAreas = (areas: string[]) => areas.join(", ");
+
 /** Label of the area filter: "All areas", "Cascais", "Cascais +2". */
-export function areasLabel(areas: string[]): string {
-  if (areas.length === 0) return "All areas";
+export function areasLabel(areas: string[], none = "All areas"): string {
+  if (areas.length === 0) return none;
   return areas.length === 1 ? areas[0] : `${areas[0]} +${areas.length - 1}`;
 }
 

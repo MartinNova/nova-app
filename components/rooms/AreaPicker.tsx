@@ -3,18 +3,33 @@
 import { Check, ChevronDown } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { areasLabel } from "@/lib/rooms/rooms";
-import { ROOM_AREAS } from "@/types/rooms";
+import { OTHER_AREA, ROOM_AREAS } from "@/types/rooms";
 
-interface AreaFilterProps {
+/** The list in both pickers: the usual areas, then "Other". */
+const OPTIONS: readonly string[] = [...ROOM_AREAS, OTHER_AREA];
+
+interface AreaPickerProps {
   value: string[];
   onChange: (areas: string[]) => void;
+  /** Shown when nothing is ticked: "All areas" in the filter, "Pick areas" in the form. */
+  placeholder?: string;
+  /** In the form a listing names at most a few areas. */
+  max?: number;
+  label?: string;
 }
 
 /**
- * Area filter that allows several areas at once ("Cascais +2"). Looks like the other dropdowns;
- * opens a list with check marks that stays open while you tick, closes on tap outside or Esc.
+ * Area dropdown that allows several areas at once ("Cascais +2"), used by the filter and the form.
+ * Looks like the other dropdowns; opens a list with check marks that stays open while you tick,
+ * closes on tap outside or Esc.
  */
-export function AreaFilter({ value, onChange }: AreaFilterProps) {
+export function AreaPicker({
+  value,
+  onChange,
+  placeholder = "All areas",
+  max,
+  label = "Areas",
+}: AreaPickerProps) {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const listId = useId();
@@ -36,20 +51,20 @@ export function AreaFilter({ value, onChange }: AreaFilterProps) {
   function toggle(area: string) {
     // Kept in list order, so the label reads "Carcavelos +1" however you ticked them.
     const next = value.includes(area) ? value.filter((a) => a !== area) : [...value, area];
-    onChange(ROOM_AREAS.filter((a) => next.includes(a)));
+    onChange(OPTIONS.filter((a) => next.includes(a)));
   }
 
   return (
     <div ref={box} className="relative">
       <button
         type="button"
-        aria-label="Areas"
+        aria-label={label}
         aria-expanded={open}
         aria-controls={listId}
         onClick={() => setOpen((o) => !o)}
         className="border-border bg-surface text-foreground focus-visible:outline-brand flex h-10 w-full items-center rounded-xl border pr-3.5 pl-2 text-left text-sm focus-visible:outline-2"
       >
-        <span className="min-w-0 flex-1 truncate">{areasLabel(value)}</span>
+        <span className="min-w-0 flex-1 truncate">{areasLabel(value, placeholder)}</span>
         <ChevronDown
           className={`text-muted size-4 shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
           strokeWidth={2}
@@ -64,7 +79,11 @@ export function AreaFilter({ value, onChange }: AreaFilterProps) {
         >
           <div className="border-border flex items-center justify-between border-b px-3 py-2">
             <span className="text-muted text-xs">
-              {value.length === 0 ? "All areas" : `${value.length} selected`}
+              {value.length === 0
+                ? placeholder
+                : max
+                  ? `${value.length} of ${max} selected`
+                  : `${value.length} selected`}
             </span>
             <button
               type="button"
@@ -75,16 +94,18 @@ export function AreaFilter({ value, onChange }: AreaFilterProps) {
               Clear
             </button>
           </div>
-          <ul className="max-h-72 overflow-y-auto py-1" aria-label="Areas">
-            {ROOM_AREAS.map((area) => {
+          <ul className="max-h-72 overflow-y-auto py-1" aria-label={label}>
+            {OPTIONS.map((area) => {
               const on = value.includes(area);
+              const full = !on && max !== undefined && value.length >= max;
               return (
                 <li key={area}>
                   <button
                     type="button"
                     aria-pressed={on}
+                    disabled={full}
                     onClick={() => toggle(area)}
-                    className="active:bg-brand/5 hover:bg-brand/5 flex min-h-10 w-full items-center gap-2 px-3 text-left text-sm"
+                    className="active:bg-brand/5 hover:bg-brand/5 flex min-h-10 w-full items-center gap-2 px-3 text-left text-sm disabled:opacity-40"
                   >
                     <span
                       className={`flex size-5 shrink-0 items-center justify-center rounded-md border transition-colors ${on ? "bg-brand border-brand text-brand-foreground" : "border-border"}`}

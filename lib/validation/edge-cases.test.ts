@@ -82,7 +82,7 @@ describe("rooms", () => {
     kind: "offer",
     title: "Room near campus",
     roomType: "room",
-    area: "Carcavelos",
+    areas: ["Carcavelos"],
     rent: 550,
     billsIncluded: false,
     availableFrom: "2026-12-01",

@@ -1,7 +1,7 @@
 import { BedDouble, CalendarDays, MapPin } from "lucide-react";
 import Link from "next/link";
 import { Avatar } from "@/components/ui/Avatar";
-import { formatAvailability, formatRent } from "@/lib/rooms/rooms";
+import { formatAreas, formatAvailability, formatRent } from "@/lib/rooms/rooms";
 import { ROOM_TYPES, type RoomListing } from "@/types/rooms";
 import type { User } from "@/types/user";
 import { PhotoGallery } from "./PhotoGallery";
@@ -37,7 +37,7 @@ export function RoomCard({ listing, poster, today }: RoomCardProps) {
         <div className="text-muted grid gap-1 text-sm">
           <p className="flex items-center gap-1.5">
             <MapPin className="size-4 shrink-0" aria-hidden />
-            {listing.area} · {ROOM_TYPES[listing.roomType]}
+            {formatAreas(listing.areas)} · {ROOM_TYPES[listing.roomType]}
           </p>
           <p className="flex items-center gap-1.5">
             <CalendarDays className="size-4 shrink-0" aria-hidden />
